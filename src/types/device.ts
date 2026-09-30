@@ -15,3 +15,17 @@ export interface Pagination<T> {
   pageSize: number
   total: number
 }
+
+export type DeviceSearch = {
+  id?: string
+  name?: string
+  workshopId?: string
+  status?: 'online' | 'offline' | 'error'
+  brightness?: number
+  temperature?: number
+  version?: number
+  updatedAt?: string
+} & {
+  page?: number
+  pageSize?: number
+}

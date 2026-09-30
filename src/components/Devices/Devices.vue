@@ -1,41 +1,149 @@
 <script setup lang="ts">
-import type { Device } from '@/types/device';
-import { reactive, ref, watch } from 'vue';
+import { GetDevices } from '@/api/device';
+import Search from './Search.vue';
+import Table from './Table.vue';
+import type { Device, DeviceSearch } from '@/types/device.ts';
+import { computed, h, nextTick, ref } from 'vue';
+import Pagination from './Pagination.vue';
+import type { ColumnOptions, TableOptions } from './types.ts';
 
-const props = defineProps<{
-    devices: Device[]
-}>()
+const deviceList = ref<Device[]>([])
 
-const devices: Device[] = reactive([])
+const currentPage = ref(1)
 
-const loading = ref(true)
+const currentPageSize = ref(10)
 
-watch(() => props.devices, (n) => {
-    loading.value = true
-    setTimeout(() => {
-        devices.splice(0, devices.length)
-        devices.push(...n)
-        loading.value = false
+const total = ref(0)
 
-    }, 2000)
+const syncing = ref(false)
 
-}, {
-    immediate: true
+const tableLoading = ref(false)
+
+const tableOptions: TableOptions = {
+    stripe: true
+}
+
+const tableColumnOptions: ColumnOptions<Device>[] = [
+    {
+        expand: true,
+        slot: {
+            default: () => h('div', 'foo')
+            // header: () => h('div', 'foo')
+        }
+    },
+    {
+        prop: 'id',
+        label: 'id',
+        search: true,
+        formatter: (row) => {
+            return row.id + '1'
+        }
+    }, {
+        prop: 'name',
+        label: 'name',
+        edit: {
+            type: 'string',
+            onEdit(row, value) {
+                row['name'] = value
+            },
+        }
+
+    }, {
+        prop: 'workshopId',
+        label: 'workshopId'
+    }, {
+        prop: 'status',
+        label: 'status'
+    }, {
+        prop: 'brightness',
+        label: 'brightness',
+        edit: {
+            type: 'number',
+            editProps: {
+                step: 5
+            },
+            onEdit(row, value) {
+                if (value) {
+                    row['brightness'] = value
+                }
+            },
+        }
+
+    }, {
+        prop: 'temperature',
+        label: 'temperature'
+    }, {
+        prop: 'version',
+        label: 'version'
+    }, {
+        prop: 'updatedAt',
+        label: 'updatedAt',
+        // expand: true,
+        slot: {
+            // default: () => 'default slot',
+            header: () => h('div', 'foo')
+        }
+    }
+]
+
+const searchOptions = computed(() => {
+    return tableColumnOptions.filter((item) => {
+        return item.search
+    })
 })
+
+const pageParams = computed(() => {
+    const val = {
+        page: currentPage.value,
+        pageSize: currentPageSize.value
+    }
+    return val
+})
+
+let requestCount = 0
+
+async function getDevices(searchParam: DeviceSearch) {
+    const params = { ...pageParams.value, ...searchParam }
+    const reqCount = ++requestCount
+    try {
+        tableLoading.value = true
+        const res = await GetDevices(params)
+        if (reqCount !== requestCount) return
+        syncing.value = true
+        try {
+            deviceList.value = res.data.list
+            total.value = res.data.total
+            currentPage.value = res.data.page
+            currentPageSize.value = res.data.pageSize
+            await nextTick()
+        } finally {
+            syncing.value = false
+        }
+
+    } catch (e) {
+
+    } finally {
+        syncing.value = false
+        tableLoading.value = false
+
+    }
+}
+
+getDevices({})
 </script>
 
 <template>
-    <el-table v-loading="loading" :data="devices">
-        <el-table-column prop="id" label="id" width="180" />
-        <el-table-column prop="name" label="name" width="180" />
-        <el-table-column prop="workshopId" label="workshopId" />
-        <el-table-column prop="status" label="status" />
-        <el-table-column prop="brightness" label="brightness" />
-        <el-table-column prop="temperature" label="temperature" />
-        <el-table-column prop="version" label="version" />
-        <el-table-column prop="updatedAt" label="updatedAt" />
-    </el-table>
+    <div>
+        <Search :search-options="searchOptions" @searchDevices="getDevices" />
+        <Table :table-options="tableOptions" :columnOptions="tableColumnOptions" :devices="deviceList"
+            :loading="tableLoading" />
+        <Pagination v-model:current-page="currentPage" v-model:current-page-size="currentPageSize" v-model:total="total"
+            :syncing="syncing" @searchDevices="getDevices" />
+        <button @click="() => {
+            console.log(deviceList, '_ - - - _');
 
+        }"></button>
+    </div>
 </template>
 
 <style scoped lang="scss"></style>
