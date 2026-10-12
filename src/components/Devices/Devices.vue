@@ -107,14 +107,14 @@ async function getDevices(searchParam: DeviceSearch) {
     const reqCount = ++requestCount
     try {
         tableLoading.value = true
-        const res = await GetDevices(params)
+        const { data } = await GetDevices(params)
         if (reqCount !== requestCount) return
         syncing.value = true
         try {
-            deviceList.value = res.data.list
-            total.value = res.data.total
-            currentPage.value = res.data.page
-            currentPageSize.value = res.data.pageSize
+            deviceList.value = data.list
+            total.value = data.total
+            currentPage.value = data.page
+            currentPageSize.value = data.pageSize
             await nextTick()
         } finally {
             syncing.value = false
