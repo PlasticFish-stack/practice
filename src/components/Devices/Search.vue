@@ -17,13 +17,16 @@ const { websocketConnect, websocketClose, addEventListener, sendMessage } = useW
 websocketConnect()
 const fn = (event: MessageEvent<any>) => {
     console.log(event);
+    const now = new Date();
 
     console.log(`消息是到了还是？: ${event.data}`);
+    console.log(now.getHours(), "||", now.getMinutes(), "||" , now.getSeconds());
+
 
 }
 const event = addEventListener('message', fn)
 
-const avent = addEventListener('message', fn)
+// const avent = addEventListener('message', fn)
 
 function sendTestMsg() {
 
