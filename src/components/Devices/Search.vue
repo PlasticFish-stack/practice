@@ -2,6 +2,7 @@
 import type { DeviceSearch } from '@/types/device'
 import { reactive, watch } from 'vue';
 import type { TableRow } from './types';
+import { useWebsocket } from '@/net/websocket';
 
 const props = defineProps<{
     searchOptions: T
@@ -11,18 +12,32 @@ const emit = defineEmits<{
     (e: 'searchDevices', searchParam: DeviceSearch): void
 }>()
 
-console.log(props.searchOptions, "opt");
+// console.log(props.searchOptions, "opt");
+const { websocketConnect, websocketClose, addEventListener, sendMessage } = useWebsocket('wss://echo.websocket.org')
+websocketConnect()
+const fn = (event: MessageEvent<any>) => {
+    console.log(event);
 
+    console.log(`消息是到了还是？: ${event.data}`);
+
+}
+const event = addEventListener('message', fn)
+
+const avent = addEventListener('message', fn)
+
+function sendTestMsg() {
+
+}
 
 const searchForm = reactive({})
 
 watch(() => props.searchOptions, (n) => {
-    console.log(n, "nnn");
+    // console.log(n, "nnn");
     if (Array.isArray(n)) {
-        n.forEach((item) => {
-            if ()
-                searchForm[item]
-        })
+        // n.forEach((item) => {
+        //     if ()
+        //         searchForm[item]
+        // })
     }
 }, {
     immediate: true
@@ -30,7 +45,14 @@ watch(() => props.searchOptions, (n) => {
 </script>
 
 <template>
-    <div>
+    <button @click="() => sendMessage('testh')"></button>
+    <button @click="() => {
+        // event && event()
+        websocketClose(false)
+        // console.log(event);
+
+    }"></button>
+    <!-- <div>
         <el-form :model="searchForm" label-width="auto" id="search">
             <el-form-item label="Id">
                 <el-input v-model="searchForm.id" />
@@ -61,7 +83,7 @@ watch(() => props.searchOptions, (n) => {
                 <el-button>重置</el-button>
             </div>
         </el-form>
-    </div>
+    </div> -->
 </template>
 
 <style scoped lang="scss">

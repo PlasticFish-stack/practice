@@ -24,13 +24,13 @@ const tableOptions: TableOptions = {
 }
 
 const tableColumnOptions: ColumnOptions<Device>[] = [
-    {
-        expand: true,
-        slot: {
-            default: () => h('div', 'foo')
-            // header: () => h('div', 'foo')
-        }
-    },
+    // {
+    //     expand: true,
+    //     slot: {
+    //         default: () => h('div', 'foo')
+    //         // header: () => h('div', 'foo')
+    //     }
+    // },
     {
         prop: 'id',
         label: 'id',

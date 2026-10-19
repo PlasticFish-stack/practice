@@ -38,7 +38,7 @@ function getRandomIntInclusive(min: number, max: number): number {
 }
 
 function createDevicesData(quantity: number): Device[] {
-    console.log('--');
+    // console.log('--');
 
     const device: Device[] = []
     for (let i = 0; i < quantity; i++) {
@@ -64,7 +64,7 @@ function createDevicesData(quantity: number): Device[] {
     return device
 }
 
-console.log(devices, "dev");
+// console.log(devices, "dev");
 
 const deviceRequest: MockType[] = [
     {

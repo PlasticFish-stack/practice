@@ -1,6 +1,9 @@
 <script setup lang="ts" generic="T extends TableRow">
 import { h, type VNode, } from 'vue';
-import { ElInput, ElInputNumber, ElSwitch, ElTableColumn } from 'element-plus';
+import ElInput from 'element-plus/es/components/input/index';
+import ElInputNumber from 'element-plus/es/components/input-number/index';
+import ElSwitch from 'element-plus/es/components/switch/index';
+import { ElTableColumn } from 'element-plus/es/components/table/index';
 import type { ColumnOptions, TableOptions, TableRow } from './types';
 
 
