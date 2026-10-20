@@ -23,7 +23,7 @@ type State = | 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'stopped'
 
 type TranistionsState = 'connecting' | 'connected' | 'reconnecting' | 'stopped'
 
-type TranistionsStateMap = Record<TranistionsState, State[]>
+type TranistionsStateMap = Record<State, State[]>
 
 type ReconnectType = {
   attempts: number //重连已连接次数
@@ -69,37 +69,16 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
 
   function tranistion(nextState: TranistionsState): boolean {
     const tranistionsMap: TranistionsStateMap = {
-      'connecting': ['idle', 'stopped'],
-      'connected': ['connecting', 'reconnecting'],
-      'reconnecting': ['connecting', 'connected', 'stopped'],
-      'stopped': ['connecting', 'reconnecting', 'connected']
+      'idle': ['connecting'],
+      'connecting': ['connected', 'stopped'],
+      'connected': ['stopped', 'reconnecting'],
+      'reconnecting': ['connected', 'stopped'],
+      'stopped': ['connecting', 'reconnecting']
     }
 
-    const allowed = tranistionsMap[nextState]
+    const allowed = tranistionsMap[connectState]
     if (!allowed.includes(connectState)) return false
     connectState = nextState
-
-
-    switch (nextState) {
-      case 'connecting':
-        _clearReconnectTimer()
-        break
-      case 'connected':
-        _clearReconnectTimer()
-        reconnect['attempts'] = 0
-
-
-        break
-      case 'reconnecting':
-        _clearReconnectTimer()
-        break
-      case 'stopped':
-        _clearReconnectTimer()
-        _clearHeartbeat()
-        break
-      default:
-        break
-    }
     return true
   }
 
@@ -110,10 +89,12 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     client = socket
   }
 
-  function _reconnect(socket: WebSocket) {
+  function _reconnect() {
     if (reconnect.attempts === reconnect.maxAttempts) {
       console.warn("超出重试次数");
-      tranistion('stopped')
+      if (!tranistion('stopped')) return
+      client = null
+      _clearHeartbeat()
       return
     }
     const delay = Math.min(
@@ -123,6 +104,7 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     console.warn(`准备第${reconnect.maxAttempts - reconnect.attempts + 1}次重连`);
     reconnect.attempts++
     reconnect.timer = setTimeout(() => {
+      client = null
       const socket = new WebSocket(url)
       _clientEvent(socket)
       for (const listener of eventListenCancel.values()) {
@@ -130,6 +112,18 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       }
       client = socket
     }, delay)
+  }
+
+  function close(isReconnect: boolean = false) {
+    if (!client) return
+    if (!tranistion('stopped')) return
+    if (!isReconnect) {
+      reconnect.attempts = reconnect.maxAttempts
+    }
+    _clearHeartbeat()
+    removeEventListener()
+    client.close()
+    client = null
   }
 
 
@@ -149,15 +143,17 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       if (client !== socket) return
       if (!tranistion('stopped')) return
       if (reconnect.attempts < reconnect.maxAttempts) {
+        close()
         if (!tranistion('reconnecting')) return
-        _reconnect(socket)
+        _reconnect()
       }
     }
     socket.onerror = () => {
       if (!tranistion('stopped')) return
       if (reconnect.attempts < reconnect.maxAttempts) {
+        close()
         if (!tranistion('reconnecting')) return
-        _reconnect(socket)
+        _reconnect()
       }
     }
   }
@@ -194,27 +190,17 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
   }
 
 
-  function close(socket: WebSocket, isReconnect: boolean = false) {
-    if (!socket) return
-    if (!isReconnect) {
-      reconnect.attempts = reconnect.maxAttempts
-    }
-    tranistion('stopped')
-    socket.close()
-  }
 
   function addEventListener<K extends keyof WebSocketEventMap>(type: K, fn: FnTypeStrict<K>) {
     if (!client) return
     let socket = client
     let copyFn: FnTypeStrict<K> | null = fn
-
     const wrapper = (e: WebSocketEventMap[K]) => copyFn?.(e, socket)
     const uuid = crypto.randomUUID()
     activeEventListenUUID.add(uuid)
     const buckets = eventBuckets.get(copyFn) ?? {}
     buckets[uuid] = type
     eventBuckets.set(copyFn, buckets)
-
     const cancel = () => {
       if (!copyFn) return
       const cancelBuckets = eventBuckets.get(copyFn)
@@ -226,7 +212,6 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
         if (Object.keys(cancelBuckets).length === 0) {
           eventBuckets.delete(copyFn)
         }
-
       }
       copyFn = null
     }
@@ -244,6 +229,16 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     console.log(eventBuckets);
 
     return cancel
+  }
+
+  function removeEventListener() {
+    if (!client) return
+    activeEventListenUUID.forEach((uuid) => {
+      const fn = eventListenCancel.get(uuid)
+      if (!fn) return
+      const { cancel } = fn
+      cancel()
+    })
   }
 
   const sendQueue: any[] = []
