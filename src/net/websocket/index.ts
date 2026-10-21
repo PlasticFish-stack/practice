@@ -29,41 +29,17 @@ type ReconnectType = {
   attempts: number //重连已连接次数
   interval: number //指数重连时间间隔
   maxAttempts: number //最大连接次数
-  timer: ReturnType<typeof setTimeout> | null //重连定时器
+  timer: ReturnType<typeof setTimeout> | null, //重连定时器
+  clearTimer: () => void,
+  resetAttempts: () => void
 }
 
-type HeartbeatType = {
-  intervalEvent: ReturnType<typeof setInterval> | null
-  timer: ReturnType<typeof setTimeout> | null,
-  pingInterval: number, //ping时间间隔
-  pingTimeout: number,
-}
+
 
 export function useWebsocket(url: string, options?: WebSocketOptions) {
-  let client: WebSocket | null = null
-  let connectTimeout = 10000 //连接超时时间
-
-  const eventBuckets = new WeakMap<ListenerRef, Record<string, keyof WebSocketEventMap>>()
-  const eventListenCancel = new Map<string, ListenerRecord>()
-  const activeEventListenUUID = new Set<string>()
-
-
-  const reconnect: ReconnectType = {
-    attempts: 0, //重连次数
-    timer: null,//重连定时器
-    interval: 5000, //重连时间间隔
-    maxAttempts: 3//最大连接次数
-  }
-
   const { CONNECTING, OPEN, CLOSED, CLOSING } = WebSocket
 
-
-  function _clearReconnectTimer() {
-    if (reconnect['timer'] !== null) {
-      clearTimeout(reconnect['timer'])
-      reconnect['timer'] = null
-    }
-  }
+  let client: WebSocket | null = null
 
   let connectState: State = 'idle'
 
@@ -75,12 +51,35 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       'reconnecting': ['connected', 'stopped'],
       'stopped': ['connecting', 'reconnecting']
     }
-
     const allowed = tranistionsMap[connectState]
     if (!allowed.includes(connectState)) return false
     connectState = nextState
     return true
   }
+
+  const eventBuckets = new WeakMap<ListenerRef, Record<string, keyof WebSocketEventMap>>()
+  const eventListenCancel = new Map<string, ListenerRecord>()
+  const activeEventListenUUID = new Set<string>()
+
+  const reconnect: ReconnectType = {
+    attempts: 0, //重连次数
+    timer: null,//重连定时器
+    interval: 5000, //重连时间间隔
+    maxAttempts: 3,//最大连接次数
+
+    clearTimer() {
+      if (this.timer !== null) {
+        clearTimeout(this.timer)
+        this.timer = null
+      }
+    },
+
+    resetAttempts() {
+      this.attempts = 0
+    }
+  }
+
+
 
   function connect() {
     if (!tranistion('connecting')) return
@@ -93,8 +92,9 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     if (reconnect.attempts === reconnect.maxAttempts) {
       console.warn("超出重试次数");
       if (!tranistion('stopped')) return
-      client = null
       _clearHeartbeat()
+
+      client = null
       return
     }
     const delay = Math.min(
@@ -137,6 +137,8 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     }
     socket.onmessage = () => {
       if (client !== socket) return
+      heartbeat.clearPingTimeout()
+
       _heartbeat(socket, '- -')
     }
     socket.onclose = () => {
@@ -158,38 +160,49 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     }
   }
 
+  type HeartbeatType = {
+    intervalEvent: ReturnType<typeof setInterval> | null
+    timer: ReturnType<typeof setTimeout> | null,
+    pingInterval: number, //ping时间间隔
+    pingTimeout: number,
+    start: (socket: WebSocket, heartbeatMsg: string) => void
+    stop: () => void,
+    clearPingTimeout: () => void
+  }
 
   const heartbeat: HeartbeatType = {
     intervalEvent: null,
     timer: null,
     pingInterval: options?.pingInterval ?? 30000, //ping时间间隔
     pingTimeout: 5000,
-  }
 
-  function _heartbeat(socket: WebSocket, heartbeatMsg: string) {
-    if (!socket) return
-    if (client !== socket) return
-    _clearHeartbeat()
-    heartbeat.intervalEvent = setInterval(() => {
-      socket.send(heartbeatMsg)
-      heartbeat.timer = setTimeout(() => {
-        socket.close()
-      }, heartbeat.pingTimeout)
-    }, heartbeat.pingInterval)
-  }
+    start(socket: WebSocket, msg: string) {
+      if (!socket) return
+      if (client !== socket) return
+      this.stop()
+      this.intervalEvent = setInterval(() => {
+        socket.send(msg)
+        this.timer = setTimeout(() => {
+          socket.close()
+        }, this.pingTimeout)
+      }, this.pingInterval)
+    },
 
-  function _clearHeartbeat() {
-    if (heartbeat.intervalEvent !== null) {
-      clearInterval(heartbeat.intervalEvent)
-      heartbeat.intervalEvent = null
+    stop() {
+      if (heartbeat.intervalEvent !== null) {
+        clearInterval(heartbeat.intervalEvent)
+        heartbeat.intervalEvent = null
+      }
+      this.clearPingTimeout()
+    },
+
+    clearPingTimeout() {
+      if (heartbeat.timer !== null) {
+        clearTimeout(heartbeat.timer)
+        heartbeat.timer = null
+      }
     }
-    if (heartbeat.timer !== null) {
-      clearTimeout(heartbeat.timer)
-      heartbeat.timer = null
-    }
   }
-
-
 
   function addEventListener<K extends keyof WebSocketEventMap>(type: K, fn: FnTypeStrict<K>) {
     if (!client) return
