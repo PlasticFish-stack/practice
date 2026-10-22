@@ -21,8 +21,6 @@ type ListenerRecord = {
 
 type State = | 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'stopped'
 
-type TranistionsState = 'connecting' | 'connected' | 'reconnecting' | 'stopped'
-
 type TranistionsStateMap = Record<State, State[]>
 
 type ReconnectType = {
@@ -32,6 +30,7 @@ type ReconnectType = {
   timer: ReturnType<typeof setTimeout> | null, //重连定时器
   clearTimer: () => void,
   resetAttempts: () => void
+  start: () => void
 }
 
 
@@ -43,16 +42,16 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
 
   let connectState: State = 'idle'
 
-  function tranistion(nextState: TranistionsState): boolean {
+  function tranistion(nextState: State): boolean {
     const tranistionsMap: TranistionsStateMap = {
       'idle': ['connecting'],
       'connecting': ['connected', 'stopped'],
-      'connected': ['stopped', 'reconnecting'],
-      'reconnecting': ['connected', 'stopped'],
-      'stopped': ['connecting', 'reconnecting']
+      'connected': ['stopped'],
+      'reconnecting': ['connecting', 'stopped'],
+      'stopped': ['connecting', 'reconnecting', 'idle']
     }
     const allowed = tranistionsMap[connectState]
-    if (!allowed.includes(connectState)) return false
+    if (!allowed.includes(nextState)) return false
     connectState = nextState
     return true
   }
@@ -76,54 +75,50 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
 
     resetAttempts() {
       this.attempts = 0
+    },
+
+    start() {
+      if (this.attempts === this.maxAttempts) return
+      if (!tranistion('reconnecting')) return
+      const delay = Math.min(
+        this.interval * 2 ** this.attempts,
+        30_000,
+      )
+      console.warn(`准备第${this.attempts + 1}次重连`);
+      this.attempts++
+      this.timer = setTimeout(() => {
+        client = null
+        connect(true)
+      }, delay)
     }
   }
 
 
 
-  function connect() {
+  function connect(isReconnecting: boolean = false) {
     if (!tranistion('connecting')) return
     const socket = new WebSocket(url)
     _clientEvent(socket)
-    client = socket
-  }
-
-  function _reconnect() {
-    if (reconnect.attempts === reconnect.maxAttempts) {
-      console.warn("超出重试次数");
-      if (!tranistion('stopped')) return
-      _clearHeartbeat()
-
-      client = null
-      return
-    }
-    const delay = Math.min(
-      reconnect.interval * 2 ** reconnect.attempts,
-      30_000,
-    )
-    console.warn(`准备第${reconnect.maxAttempts - reconnect.attempts + 1}次重连`);
-    reconnect.attempts++
-    reconnect.timer = setTimeout(() => {
-      client = null
-      const socket = new WebSocket(url)
-      _clientEvent(socket)
+    if (isReconnecting) {
       for (const listener of eventListenCancel.values()) {
         listener.bind(socket)
       }
-      client = socket
-    }, delay)
+    }
+    client = socket
+    reconnect.resetAttempts()
   }
 
-  function close(isReconnect: boolean = false) {
+  function close() {
     if (!client) return
     if (!tranistion('stopped')) return
-    if (!isReconnect) {
-      reconnect.attempts = reconnect.maxAttempts
-    }
-    _clearHeartbeat()
+
+    reconnect.attempts = reconnect.maxAttempts
+
+    heartbeat.stop()
     removeEventListener()
     client.close()
     client = null
+    if (!tranistion('idle')) return
   }
 
 
@@ -133,30 +128,27 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       if (client !== socket) return
       tranistion('connected')
       executiveSendQueue()
-      _heartbeat(socket, '- -')
+      heartbeat.start(socket, '- -')
     }
     socket.onmessage = () => {
       if (client !== socket) return
       heartbeat.clearPingTimeout()
 
-      _heartbeat(socket, '- -')
+      heartbeat.start(socket, '- -')
     }
     socket.onclose = () => {
       if (client !== socket) return
       if (!tranistion('stopped')) return
+      heartbeat.stop()
+      client.close()
+      client = null
       if (reconnect.attempts < reconnect.maxAttempts) {
-        close()
-        if (!tranistion('reconnecting')) return
-        _reconnect()
+        reconnect.start()
       }
     }
-    socket.onerror = () => {
-      if (!tranistion('stopped')) return
-      if (reconnect.attempts < reconnect.maxAttempts) {
-        close()
-        if (!tranistion('reconnecting')) return
-        _reconnect()
-      }
+    socket.onerror = (e) => {
+      console.error("error", e);
+
     }
   }
 
@@ -210,10 +202,6 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     let copyFn: FnTypeStrict<K> | null = fn
     const wrapper = (e: WebSocketEventMap[K]) => copyFn?.(e, socket)
     const uuid = crypto.randomUUID()
-    activeEventListenUUID.add(uuid)
-    const buckets = eventBuckets.get(copyFn) ?? {}
-    buckets[uuid] = type
-    eventBuckets.set(copyFn, buckets)
     const cancel = () => {
       if (!copyFn) return
       const cancelBuckets = eventBuckets.get(copyFn)
@@ -228,6 +216,7 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       }
       copyFn = null
     }
+
     const bind = (nextSocket: WebSocket) => {
       if (!copyFn) return
       socket.removeEventListener(type, wrapper)
@@ -236,11 +225,14 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       activeEventListenUUID.add(uuid)
     }
 
-    eventListenCancel.set(uuid, { cancel, bind })
-
+    const uuidBuckets = eventBuckets.get(copyFn) ?? {} //uuid
+    {
+      uuidBuckets[uuid] = type
+      eventBuckets.set(copyFn, uuidBuckets)
+    } //填充eventBuckets
     socket.addEventListener(type, wrapper)
-    console.log(eventBuckets);
-
+    activeEventListenUUID.add(uuid) //现在活跃的uuid列表
+    eventListenCancel.set(uuid, { cancel, bind })
     return cancel
   }
 
