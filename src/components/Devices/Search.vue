@@ -13,18 +13,18 @@ const emit = defineEmits<{
 }>()
 
 // console.log(props.searchOptions, "opt");
-const { websocketConnect, websocketClose, addEventListener, sendMessage } = useWebsocket('wss://echo.websocket.org')
-websocketConnect()
-const fn = (event: MessageEvent<any>) => {
-    console.log(event);
-    const now = new Date();
+const { connect, close, addEventListener, sendMessage } = useWebsocket('wss://echo.websocket.org')
+// websocketConnect()
+// const fn = (event: MessageEvent<any>) => {
+//     console.log(event);
+//     const now = new Date();
 
-    console.log(`消息是到了还是？: ${event.data}`);
-    console.log(now.getHours(), "||", now.getMinutes(), "||" , now.getSeconds());
+//     console.log(`消息是到了还是？: ${event.data}`);
+//     console.log(now.getHours(), "||", now.getMinutes(), "||" , now.getSeconds());
 
 
-}
-const event = addEventListener('message', fn)
+// }
+// const event = addEventListener('message', fn)
 
 // const avent = addEventListener('message', fn)
 
@@ -51,7 +51,7 @@ watch(() => props.searchOptions, (n) => {
     <button @click="() => sendMessage('testh')"></button>
     <button @click="() => {
         // event && event()
-        websocketClose(false)
+        // websocketClose(false)
         // console.log(event);
 
     }"></button>

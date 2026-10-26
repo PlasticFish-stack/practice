@@ -6,6 +6,7 @@ import type { Device, DeviceSearch } from '@/types/device.ts';
 import { computed, h, nextTick, ref } from 'vue';
 import Pagination from './Pagination.vue';
 import type { ColumnOptions, TableOptions } from './types.ts';
+import Status from '../Form/Status/Status.vue';
 
 const deviceList = ref<Device[]>([])
 
@@ -36,7 +37,7 @@ const tableColumnOptions: ColumnOptions<Device>[] = [
         label: 'id',
         search: true,
         formatter: (row) => {
-            return row.id + '1'
+            return row.id
         }
     }, {
         prop: 'name',
@@ -53,7 +54,10 @@ const tableColumnOptions: ColumnOptions<Device>[] = [
         label: 'workshopId'
     }, {
         prop: 'status',
-        label: 'status'
+        label: 'status',
+        slot: {
+            default: () => h(Status)
+        }
     }, {
         prop: 'brightness',
         label: 'brightness',

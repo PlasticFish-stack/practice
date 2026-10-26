@@ -33,8 +33,6 @@ type ReconnectType = {
   start: () => void
 }
 
-
-
 export function useWebsocket(url: string, options?: WebSocketOptions) {
   const { CONNECTING, OPEN, CLOSED, CLOSING } = WebSocket
 
@@ -93,8 +91,6 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     }
   }
 
-
-
   function connect(isReconnecting: boolean = false) {
     if (!tranistion('connecting')) return
     const socket = new WebSocket(url)
@@ -103,30 +99,28 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       for (const listener of eventListenCancel.values()) {
         listener.bind(socket)
       }
+    } else {
+      reconnect.resetAttempts()
     }
     client = socket
-    reconnect.resetAttempts()
   }
 
   function close() {
-    if (!client) return
-    if (!tranistion('stopped')) return
-
+    reconnect.clearTimer()
     reconnect.attempts = reconnect.maxAttempts
-
     heartbeat.stop()
     removeEventListener()
-    client.close()
+    if (!tranistion('stopped')) return
+    client && client.close()
     client = null
     if (!tranistion('idle')) return
   }
-
-
 
   function _clientEvent(socket: WebSocket) {
     socket.onopen = () => {
       if (client !== socket) return
       tranistion('connected')
+      reconnect.resetAttempts()
       executiveSendQueue()
       heartbeat.start(socket, '- -')
     }
@@ -148,7 +142,6 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     }
     socket.onerror = (e) => {
       console.error("error", e);
-
     }
   }
 
@@ -237,7 +230,6 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
   }
 
   function removeEventListener() {
-    if (!client) return
     activeEventListenUUID.forEach((uuid) => {
       const fn = eventListenCancel.get(uuid)
       if (!fn) return
@@ -248,30 +240,39 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
 
   const sendQueue: any[] = []
 
-
-
   function clearSendQueue() {
     sendQueue.length = 0
+    console.log(clearSendQueue, "clearSendQueue");
   }
 
   function sendMessage(data: BufferSource | Blob | string) {
-    if (!client) return
-    const socket = client
-    if (socket.readyState !== OPEN) {
-      sendQueue.push(data)
-      return
-    }
-    socket.send(data)
+    const wait = new Promise((res) => res(data))
+    sendQueue.push(wait)
   }
+  let resendMsgCount = 0
 
-
-  function executiveSendQueue() {
+  async function executiveSendQueue() {
+    if (resendMsgCount >= 3) {
+      console.warn(`重发消息次数达到${resendMsgCount}次，连接即将关闭，请检查`)
+      client?.close(1000, "重发次数达到上限")
+    }
+    let data
     if (sendQueue.length > 0) {
-      while (sendQueue.length > 0) {
-        sendMessage(sendQueue[0])
-        sendQueue.shift()
+      data = await sendQueue.splice(0, 1)[0]
+    }
+    if (!data) return
+    const sendClient = client
+    if (sendClient === client) {
+      if (client?.readyState === OPEN) {
+        sendClient?.send(data)
+        resendMsgCount = 0
+      } else {
+        const wait = new Promise((res) => res(data))
+        sendQueue.unshift(wait)
+        resendMsgCount++
       }
     }
+    return executiveSendQueue()
   }
 
 
