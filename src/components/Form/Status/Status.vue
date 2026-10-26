@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
+const { color = 'red', size = 8, sizeType = 'px' } = defineProps<{
+    color?: string
+    size?: number
+    sizeType?: string
+}>()
+
+const sizePx = computed(() => `${size}${sizeType}`)
+console.log(color);
 
 </script>
 
@@ -19,11 +29,11 @@
 }
 
 .status {
-    width: 8px;
-    height: 8px;
+    width: v-bind(sizePx);
+    height: v-bind(sizePx);
     display: inline-block;
-    background-color: red;
-    color: red;
+    background-color: v-bind(color);
+    color: v-bind(color);
     border-radius: 90px;
     position: relative;
     isolation: isolate;
@@ -33,8 +43,8 @@
 
 .status::before {
     content: '';
-    height: 8px;
-    width: 8px;
+    height: v-bind(sizePx);
+    width: v-bind(sizePx);
     display: inline-block;
     border-radius: 90px;
     border-color: inherit;

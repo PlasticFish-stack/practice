@@ -78,6 +78,7 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     start() {
       if (this.attempts === this.maxAttempts) return
       if (!tranistion('reconnecting')) return
+      this.clearTimer()
       const delay = Math.min(
         this.interval * 2 ** this.attempts,
         30_000,
@@ -85,7 +86,9 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
       console.warn(`准备第${this.attempts + 1}次重连`);
       this.attempts++
       this.timer = setTimeout(() => {
-        client = null
+        this.timer = null
+        if (connectState !== 'reconnecting') return
+        if (client !== null) return
         connect(true)
       }, delay)
     }
@@ -93,14 +96,14 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
 
   function connect(isReconnecting: boolean = false) {
     if (!tranistion('connecting')) return
+    reconnect.clearTimer()
+    if (!isReconnecting) {
+      reconnect.resetAttempts()
+    }
     const socket = new WebSocket(url)
     _clientEvent(socket)
-    if (isReconnecting) {
-      for (const listener of eventListenCancel.values()) {
-        listener.bind(socket)
-      }
-    } else {
-      reconnect.resetAttempts()
+    for (const listener of eventListenCancel.values()) {
+      listener.bind(socket)
     }
     client = socket
   }
@@ -111,6 +114,7 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     heartbeat.stop()
     removeEventListener()
     if (!tranistion('stopped')) return
+
     client && client.close()
     client = null
     if (!tranistion('idle')) return
@@ -238,7 +242,7 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
     })
   }
 
-  const sendQueue: any[] = []
+  const sendQueue: (BufferSource | Blob | string)[] = []
 
   function clearSendQueue() {
     sendQueue.length = 0
@@ -246,38 +250,22 @@ export function useWebsocket(url: string, options?: WebSocketOptions) {
   }
 
   function sendMessage(data: BufferSource | Blob | string) {
-    const wait = new Promise((res) => res(data))
-    sendQueue.push(wait)
-  }
-  let resendMsgCount = 0
-
-  async function executiveSendQueue() {
-    if (resendMsgCount >= 3) {
-      console.warn(`重发消息次数达到${resendMsgCount}次，连接即将关闭，请检查`)
-      client?.close(1000, "重发次数达到上限")
-    }
-    let data
-    if (sendQueue.length > 0) {
-      data = await sendQueue.splice(0, 1)[0]
-    }
-    if (!data) return
-    const sendClient = client
-    if (sendClient === client) {
-      if (client?.readyState === OPEN) {
-        sendClient?.send(data)
-        resendMsgCount = 0
-      } else {
-        const wait = new Promise((res) => res(data))
-        sendQueue.unshift(wait)
-        resendMsgCount++
-      }
-    }
-    return executiveSendQueue()
+    sendQueue.push(data)
+    executiveSendQueue()
   }
 
+
+  function executiveSendQueue() {
+    while (sendQueue.length > 0) {
+      if (client?.readyState !== OPEN) return
+      const data = sendQueue[0]
+      client.send(data)
+      sendQueue.shift()
+    }
+  }
 
   onScopeDispose(() => {
-
+    close()
   })
 
   return {

@@ -56,7 +56,7 @@ const tableColumnOptions: ColumnOptions<Device>[] = [
         prop: 'status',
         label: 'status',
         slot: {
-            default: () => h(Status)
+            default: () => h(Status, { color: 'red', size: 8, sizeType: 'px' })
         }
     }, {
         prop: 'brightness',
