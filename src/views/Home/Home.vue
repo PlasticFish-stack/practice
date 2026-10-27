@@ -1,38 +1,33 @@
 <script setup lang="ts">
+import Aside from '@/components/Aside/Aside.vue';
 import Devices from '@/components/Devices/Devices.vue';
+import Main from '@/components/Main/Main.vue';
 import Menu from '@/components/Menu/Menu.vue';
-
 
 </script>
 
 <template>
-    <el-container>
-      <el-header>
-        <div id="header-container">
+  <el-container>
+    <el-header>
+      <div id="header-container">
+        <div>
           <div>
-            <div>
-              <el-icon>
-                <Message />
-              </el-icon>
-            </div>
-            <div></div>
-            <div></div>
+            <el-icon>
+              <Message />
+            </el-icon>
           </div>
+          <div></div>
+          <div></div>
         </div>
-      </el-header>
-      <el-container>
-
-        <el-aside width="260px">
-          <div id="aside-container">
-            <Menu></Menu>
-          </div>
-        </el-aside>
-
-        <el-main>
-          <Devices />
-        </el-main>
-      </el-container>
+      </div>
+    </el-header>
+    <el-container>
+      <Aside #default="{ isCollapse }">
+        <Menu :is-collapse="isCollapse"></Menu>
+      </Aside>
+      <Main></Main>
     </el-container>
+  </el-container>
 
 </template>
 
@@ -44,11 +39,5 @@ import Menu from '@/components/Menu/Menu.vue';
   position: relative;
   border-bottom: 1px solid var(--el-border-color);
   z-index: 1;
-}
-#aside-container{
-  box-sizing: border-box;
-  height: 100%;
-  padding: 10px;
-  border-right: 1px solid var(--el-border-color);
 }
 </style>

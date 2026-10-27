@@ -24,6 +24,22 @@ const tableOptions: TableOptions = {
     stripe: true
 }
 
+function statusSelect(status: string) {
+    if (status === 'online') return {
+        color: 'green',
+        ripple: false
+    }
+    if (status === 'offline') return {
+        color: 'yellow',
+        ripple: false
+    }
+    if (status === 'error') return {
+        color: 'red',
+        ripple: true
+    }
+    return {}
+}
+
 const tableColumnOptions: ColumnOptions<Device>[] = [
     // {
     //     expand: true,
@@ -56,7 +72,7 @@ const tableColumnOptions: ColumnOptions<Device>[] = [
         prop: 'status',
         label: 'status',
         slot: {
-            default: () => h(Status, { color: 'red', size: 8, sizeType: 'px' })
+            default: (d) => h(Status, { ...statusSelect(d.row.status), size: 8, sizeType: 'px', })
         }
     }, {
         prop: 'brightness',

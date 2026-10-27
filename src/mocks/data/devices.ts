@@ -4,29 +4,6 @@ import type { MockType } from '@/types/mock'
 
 export const devices: Device[] = createDevicesData(60)
 
-// [
-//     {
-//         id: '1',
-//         name: 'Lamp A',
-//         workshopId: 'A2',
-//         status: 'online',
-//         brightness: 80,
-//         temperature: 36.5,
-//         version: 1,
-//         updatedAt: new Date().toISOString()
-//     },
-//     {
-//         id: '2',
-//         name: 'Lamp B',
-//         workshopId: 'A3',
-//         status: 'offline',
-//         brightness: 0,
-//         temperature: 25.2,
-//         version: 1,
-//         updatedAt: new Date().toISOString()
-//     }
-// ]
-
 function getRandomArbitrary(min: number, max: number): number {
     return Number((Math.random() * (max - min) + min).toFixed(1));
 }
@@ -54,7 +31,7 @@ function createDevicesData(quantity: number): Device[] {
             id: String(i + 1),
             name: `Lamp ${random.name > 50 ? 'A' : 'B'}`,
             workshopId: `${random.workshopId > 50 ? 'A' : 'B'}${getRandomIntInclusive(0, 100) > 50 ? '1' : '2'}`,
-            status: `${random.status > 30 ? 'online' : random.status > 60 ? 'offline' : 'error'}`,
+            status: `${random.status > 60 ? 'online' : random.status > 30 ? 'offline' : 'error'}`,
             brightness: random.brightness,
             temperature: random.temperature,
             version: random.version,

@@ -11,8 +11,13 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Aside: typeof import('./src/components/Aside/Aside.vue')['default']
+    Button: typeof import('./src/components/Aside/Button.vue')['default']
     Devices: typeof import('./src/components/Devices/Devices.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
+    ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
+    ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']
+    ElButton: typeof import('element-plus/es')['ElButton']
     ElContainer: typeof import('element-plus/es')['ElContainer']
     ElHeader: typeof import('element-plus/es')['ElHeader']
     ElIcon: typeof import('element-plus/es')['ElIcon']
@@ -23,6 +28,7 @@ declare module 'vue' {
     ElPagination: typeof import('element-plus/es')['ElPagination']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     ElTable: typeof import('element-plus/es')['ElTable']
+    Main: typeof import('./src/components/Main/Main.vue')['default']
     Menu: typeof import('./src/components/Menu/Menu.vue')['default']
     Pagination: typeof import('./src/components/Devices/Pagination.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

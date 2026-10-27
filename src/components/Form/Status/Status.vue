@@ -5,6 +5,7 @@ const { color = 'red', size = 8, sizeType = 'px' } = defineProps<{
     color?: string
     size?: number
     sizeType?: string
+    ripple?: boolean
 }>()
 
 const sizePx = computed(() => `${size}${sizeType}`)
@@ -14,7 +15,7 @@ console.log(color);
 
 <template>
     <div class="status-container">
-        <span class="status" />
+        <span class="status" :class="{ 'is-ripple': ripple }" />
     </div>
 
 </template>
@@ -41,7 +42,7 @@ console.log(color);
     will-change: transform;
 }
 
-.status::before {
+.status.is-ripple::before {
     content: '';
     height: v-bind(sizePx);
     width: v-bind(sizePx);

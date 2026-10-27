@@ -5,6 +5,10 @@ import {
     Location,
     Setting,
 } from '@element-plus/icons-vue'
+
+const props = defineProps<{
+    isCollapse?: boolean
+}>()
 const handleOpen = (key: string, keyPath: string[]) => {
     console.log(key, keyPath)
 }
@@ -15,7 +19,7 @@ const handleClose = (key: string, keyPath: string[]) => {
 
 <template>
     <div id="menu">
-        <el-menu default-active="2" @open="handleOpen" @close="handleClose">
+        <el-menu :collapse="isCollapse" default-active="2" @open="handleOpen" @close="handleClose">
             <el-sub-menu index="1">
                 <template #title>
                     <el-icon>
