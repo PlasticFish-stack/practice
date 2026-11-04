@@ -172,7 +172,7 @@ test('same-level menu labels align while nested labels keep their indentation', 
   await login(page, 'admin')
   await expect(page).toHaveURL('/device')
   const labels = page.locator('.app-menu > .el-menu-item .menu-label, .app-menu > .el-sub-menu > .el-sub-menu__title .menu-label')
-  await expect(labels).toHaveCount(4)
+  await expect(labels).toHaveCount(3)
   for (const width of [1280, 800]) {
     await page.setViewportSize({ width, height: 900 })
     const positions = await labels.evaluateAll(elements => elements.map(el => {
@@ -215,7 +215,9 @@ test('account navigation shows session details, saves profile and keeps permissi
   await expect(page).toHaveURL('/account/center')
   await expect(page.getByRole('heading', { name: '账户信息', exact: true })).toBeVisible()
   await expect(page.locator('.app-menu .el-menu-item.is-active')).toHaveText('个人中心')
-  await expect(page.locator('.app-menu > .el-sub-menu.is-active')).toHaveCount(0)
+  await expect(page.locator('.app-menu > .el-sub-menu.is-active')).toHaveCount(1)
+  await expect(page.locator('.app-menu > .el-sub-menu.is-active > .el-sub-menu__title')).toContainText('系统管理')
+  await page.screenshot({ path: 'artifacts/account-under-system.png', fullPage: true })
   await expect(page.locator('.app-menu').getByRole('menuitem', { name: '个人设置', exact: true })).toHaveCount(0)
   await expect(page.getByText('设备观察员', { exact: true }).first()).toBeVisible()
   const originalName = await page.locator('.account-name').textContent()

@@ -42,7 +42,7 @@ test('landing page and menu reflect permissions; personal pages remain available
   }
 })
 
-test('system group enters the first permitted page and rejects ordinary users', async () => {
+test('system group enters the first permitted page; ordinary users can only access their personal center', async () => {
   const manager = setup({ session: async () => profile(['system:roles:read']) })
   await manager.router.push('/system')
   assert.equal(manager.router.currentRoute.value.name, 'system-roles')
@@ -50,6 +50,11 @@ test('system group enters the first permitted page and rejects ordinary users', 
   assert.equal(manager.router.currentRoute.value.name, 'forbidden')
   const ordinary = setup({ session: async () => profile(['devices:read']) })
   await ordinary.router.push('/system')
+  assert.equal(ordinary.router.currentRoute.value.name, 'account-center')
+  const group = ordinary.access.accessibleMenus(ordinary.router, ordinary.auth).find(item => item.index === 'system')
+  assert.equal(group.children.length, 1)
+  assert.equal(group.children[0].index, 'account-center')
+  await ordinary.router.push('/system/users')
   assert.equal(ordinary.router.currentRoute.value.name, 'forbidden')
 })
 

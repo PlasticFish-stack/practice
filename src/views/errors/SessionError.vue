@@ -9,6 +9,7 @@ function retry() {
   // 只允许站内地址，实际权限由目标页面的路由守卫重新确认。
   const candidate = route.query.redirect
   const destination = typeof candidate === 'string' && /^\/(?!\/)/.test(candidate)
+    // eslint-disable-next-line no-control-regex -- Intentionally reject control characters in redirect URLs.
     && !/[\\\u0000-\u0020]/.test(candidate) && !candidate.startsWith('/session-error')
     ? candidate : safeDestination(undefined, router, auth)
   void router.replace(destination)

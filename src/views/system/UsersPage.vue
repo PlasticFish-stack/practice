@@ -40,7 +40,7 @@ async function remove(row: UserRecord) {
     <el-alert v-if="error" :title="error" type="error" :closable="false" role="alert" />
     <form class="system-search" @submit.prevent="search(keyword)"><el-input v-model="keyword" aria-label="搜索用户" placeholder="用户名、显示名称或邮箱" clearable maxlength="100" />
       <el-button native-type="submit" type="primary" :loading="loading">搜索</el-button><el-button :disabled="loading" @click="keyword = ''; search('')">重置</el-button></form>
-    <AppTable :rows="rows" :column-options="columns" :loading="loading" title="用户列表" description="通过角色授予用户权限"
+    <AppTable table-key="system.users" :rows="rows" :column-options="columns" :loading="loading" title="用户列表" description="通过角色授予用户权限"
       :pagination="{ page: query.page, pageSize: query.pageSize, total }" @page-change="paginate">
       <template #toolbar><el-button :disabled="loading" @click="reload">刷新</el-button><el-button v-if="auth.can(PERMISSIONS.userWrite)" type="primary" :disabled="loading" @click="edit(null)">新增用户</el-button></template>
       <template #cell-roleIds="{ row }"><div class="system-tags"><el-tag v-for="id in row.roleIds" :key="id" :type="catalog.roles.find(role => role.id === id)?.enabled ? 'primary' : 'info'">{{ catalog.roles.find(role => role.id === id)?.name ?? id }}</el-tag><span v-if="!row.roleIds.length" class="system-empty">未分配角色</span></div></template>

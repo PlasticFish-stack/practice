@@ -90,7 +90,61 @@ function edit(row: Row) { console.log(row) }
 
 工具栏使用 `toolbar` 插槽，提供当前 `selection`；`empty`、`append` 插槽转交原生表格。常用事件有 `selection-change`、`sort-change`、`row-click`。组件 ref 暴露 `clearSelection()`、`getSelectionRows()`、`toggleRowSelection(row, selected?)`、`clearSort()`，类型为 `TableHandle<Row>`。
 
-### 分页
+### 单元格区域选择
+
+参考 [Surely Vue 的 rangeSelection API](https://github.com/surely-vue/surely-table/blob/main/src/doc/api.zh-CN.md)，AppTable 默认支持一个矩形选区：
+
+- 单击数据格显示蓝色边框；鼠标拖动或 Shift + 单击扩展选区。
+- 方向键移动，Shift + 方向键扩展，Esc 清空；点击表格外也会清空。
+- Ctrl/Cmd + C 复制选区的显示文本，以制表符分列、换行分行，可粘贴到 Excel。
+- 行勾选、编辑控件、链接、折叠和拖拽手柄独立操作。选择、序号、展开列不参与选区；操作列可配置 `cellSelectable: false`。
+- `:cell-selection="false"` 关闭，恢复原生文本划词选择。
+- `@cell-selection-change` 返回 `SelectedCell[]`，包含当前可见行的零基 `rowIndex`、全部叶子列的零基 `columnIndex` 和显示 `text`。这些索引不是业务主键。
+- ref 提供 `getSelectedCells()` 和 `clearCellSelection()`。数据集、列配置、排序、展开或加载状态变化会清空选区，避免选中旧位置。
+
+当前支持单个矩形范围，不包含多段不连续选区；合并单元格不参与选择。
+
+### 列设置
+
+AppTable 默认在工具栏提供“列设置”：显示/隐藏数据列、拖动排序（也可用上移/下移按钮）、输入列宽、恢复默认。数据列表头右边缘支持拖动调整宽度；虚拟表格使用相同交互，手柄还支持左右方向键每次调整 10px。
+
+```vue
+<AppTable table-key="devices.list" :rows="rows" :column-options="columns" />
+```
+
+- `tableKey` 是稳定的表格标识，配置保存到当前浏览器 localStorage，各表互不影响。没有配置时，仅在当前组件实例内记忆；如需按账户隔离，可传入包含用户 ID 的 key。
+- `:column-settings="false"` 关闭面板和自定义列配置。
+- 每个数据列使用稳定且唯一的 `key` 或 `prop`。业务侧 `hidden: true` 的列不出现在面板中；权限变化后，历史设置不能将这些列重新显示。
+- 选择、序号、折叠、操作列、未命名列和分组表头保留原有位置。分组表头目前不提供组内自定义。其他列按左固定、普通、右固定区域分别排序，不跨区域移动。
+- `settingsLocked: true` 保留指定列的位置、可见性与宽度；`resizable: false` 仅禁止调整列宽。至少保留一列数据，不能全部隐藏。
+- 配置只保存列标识、顺序、可见性与宽度，不保存行数据。损坏的本地配置自动回到默认；宽度受列的 `minWidth` 和合理范围约束。
+- 状态由 `useTableColumns` 管理，面板由 `TableColumnSettings` 渲染，表头的指针捕获由 `ColumnResizeHandle` 管理。AppTable 只负责把结果交给普通/虚拟渲染器。
+
+### 自动虚拟化
+
+AppTable 的 `virtual` 默认是 `'auto'`：**没有配置分页且 `rows.length >= 500`** 时，兼容的平铺表格切换到 Element Plus Table V2。500 是可调策略，不是性能保证。
+
+```vue
+<AppTable
+  :rows="rows"
+  :column-options="columns"
+  :table-options="{ rowKey: 'id' }"
+  virtual="auto"
+  :virtual-threshold="500"
+  :virtual-height="480"
+/>
+```
+
+- `:virtual="false"` 始终使用普通表格；`:virtual="true"` 忽略行数和分页条件，但仍执行兼容性检查。
+- 虚拟模式需要唯一且非空的字符串/数字主键，`tableOptions.rowKey` 使用字段名。
+- 默认固定行高 48px（small 36px、large 60px）；视口高度优先使用数字 `tableOptions.height` / `maxHeight`，否则使用 `virtualHeight`，默认 480px。
+- 已适配平铺数据、固定列、选择/序号列、单列排序、自定义表头/单元格插槽、formatter、单元格矩形选区和复制。虚拟选区按数据索引记录，滚动回收节点不会改变选区。
+- 树形数据、行拖拽、展开内容、分组表头、合并格、筛选、编辑、append 插槽及其他尚未适配的原生属性/事件自动保留普通表格。不会为了虚拟化丢弃这些功能。
+- `@render-mode-change` 返回 `{ mode: 'standard' | 'virtual', reason?: string }`，可用于调试回退原因。根节点 `data-render-mode` 标记实际模式。
+- 模式切换时保留已勾选行，清空单元格选区；排序状态不跨模式保留。刷新虚拟表格数据时按主键更新已勾选的行对象，默认移除已删除的行；`reserveSelection: true` 则保留不在当前数据集中的勾选记录。
+- 自定义单元格建议配置 `copyText: (row, rowIndex) => string`，保证滚动到屏幕外之后仍能正确复制。未配置时，优先读取已挂载格子的显示文本；未挂载格子使用字符串 formatter 或原始字段值，不会在渲染流程外调用插槽。
+
+### 分页用法
 
 ```vue
 <AppTable

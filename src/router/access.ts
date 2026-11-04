@@ -20,6 +20,7 @@ export function defaultDestination(router: Router, auth: AccessAuth) {
 }
 
 export function safeDestination(value: unknown, router: Router, auth: AccessAuth) {
+  // eslint-disable-next-line no-control-regex -- Intentionally reject control characters in redirect URLs.
   if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || /[\\\u0000-\u0020]/.test(value)) {
     return defaultDestination(router, auth)
   }

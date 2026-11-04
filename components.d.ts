@@ -15,6 +15,9 @@ declare module 'vue' {
     AppPagination: typeof import('./src/components/AppPagination.vue')['default']
     AppTable: typeof import('./src/components/AppTable/AppTable.vue')['default']
     AppTableColumn: typeof import('./src/components/AppTable/AppTableColumn.vue')['default']
+    AppVirtualTable: typeof import('./src/components/AppTable/AppVirtualTable.vue')['default']
+    ColumnResizeHandle: typeof import('./src/components/AppTable/ColumnResizeHandle.vue')['default']
+    DragHandleIcon: typeof import('./src/components/AppTable/DragHandleIcon.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
@@ -45,6 +48,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     StatusIndicator: typeof import('./src/components/StatusIndicator.vue')['default']
+    TableColumnSettings: typeof import('./src/components/AppTable/TableColumnSettings.vue')['default']
     UserAvatar: typeof import('./src/components/UserAvatar.vue')['default']
   }
   export interface GlobalDirectives {

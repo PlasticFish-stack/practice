@@ -19,11 +19,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: '账户', menu: false },
         children: [
           {
-            path: 'center', name: 'account-center',
-            component: () => import('@/views/account/AccountCenter.vue'),
-            meta: { title: '个人中心', menu: true, menuOrder: 30, icon: 'UserFilled', searchable: true },
-          },
-          {
             path: 'settings', name: 'account-settings',
             redirect: to => ({ name: 'account-center', query: { ...to.query, edit: '1' }, hash: to.hash }),
           },
@@ -39,6 +34,8 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: '角色管理', menu: true, menuOrder: 20, icon: 'Key', permissions: [PERMISSIONS.roleRead] } },
           { path: 'menus', name: 'system-menus', component: () => import('@/views/system/MenusPage.vue'),
             meta: { title: '菜单管理', menu: true, menuOrder: 30, icon: 'Menu', permissions: [PERMISSIONS.menuRead] } },
+          { path: '/account/center', name: 'account-center', component: () => import('@/views/account/AccountCenter.vue'),
+            meta: { title: '个人中心', menu: true, menuOrder: 40, icon: 'UserFilled', searchable: true } },
         ],
       },
       {

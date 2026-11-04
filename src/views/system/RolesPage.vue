@@ -39,7 +39,7 @@ async function remove(row: RoleRecord) {
     <el-alert v-if="error" :title="error" type="error" :closable="false" role="alert" />
     <form class="system-search" @submit.prevent="search(keyword)"><el-input v-model="keyword" aria-label="搜索角色" placeholder="角色名称、编码或描述" clearable maxlength="100" />
       <el-button native-type="submit" type="primary" :loading="loading">搜索</el-button><el-button :disabled="loading" @click="keyword = ''; search('')">重置</el-button></form>
-    <AppTable :rows="rows" :column-options="columns" :loading="loading" title="角色列表" description="权限由启用的角色合并计算"
+    <AppTable table-key="system.roles" :rows="rows" :column-options="columns" :loading="loading" title="角色列表" description="权限由启用的角色合并计算"
       :pagination="{ page: query.page, pageSize: query.pageSize, total }" @page-change="paginate">
       <template #toolbar><el-button :disabled="loading" @click="reload">刷新</el-button><el-button v-if="auth.can(PERMISSIONS.roleWrite)" type="primary" :disabled="loading" @click="edit(null)">新增角色</el-button></template>
       <template #cell-name="{ row }"><div class="system-tags">{{ row.name }}<el-tag v-if="row.protected" size="small">内置</el-tag></div></template>

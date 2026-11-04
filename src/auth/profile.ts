@@ -9,6 +9,7 @@ export function profileFromUser(user: SessionUser | null): UserProfile {
 
 export function validAvatarUrl(value: string) {
   if (!value) return true
+  // eslint-disable-next-line no-control-regex -- Intentionally reject control characters in local avatar paths.
   if (/^\/(?!\/)/.test(value)) return !/[\\\u0000-\u0020]/.test(value)
   try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password } catch { return false }
 }

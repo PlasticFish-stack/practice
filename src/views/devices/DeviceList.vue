@@ -77,7 +77,7 @@ void getDevices()
   <div>
     <DeviceSearchForm @search="searchDevices" />
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon role="alert" />
-    <AppTable :column-options="tableColumnOptions" :rows="deviceList" :loading="tableLoading"
+    <AppTable table-key="devices.list" :column-options="tableColumnOptions" :rows="deviceList" :loading="tableLoading"
       :table-options="{ stripe: true, rowKey: 'id' }" title="设备列表" :description="`共 ${total} 台设备`"
       :pagination="{ page: currentPage, pageSize: currentPageSize, total }" :syncing="syncing" @page-change="getDevices">
       <template #toolbar><el-button :disabled="tableLoading" @click="getDevices()"><el-icon><Refresh /></el-icon>刷新</el-button></template>

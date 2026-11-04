@@ -42,7 +42,7 @@ test('account group preserves existing URLs and redirects to personal center', a
   assert.equal(router.currentRoute.value.name, 'account-center')
   await router.push('/account/settings?tab=basic#profile')
   assert.equal(router.currentRoute.value.name, 'account-center')
-  assert.equal(router.currentRoute.value.matched.at(-2).name, 'account')
+  assert.equal(router.currentRoute.value.matched.at(-2).name, 'system')
   assert.equal(router.currentRoute.value.fullPath, '/account/center?tab=basic&edit=1#profile')
 })
 
