@@ -1,6 +1,6 @@
-import Http from "./config";
+import createHttp from '@/net/axios'
+import type { HttpAuthHooks } from '@/net/axios'
 
-export const api = new Http("/", {
-    maxLimit: 0
-})
-
+const hooks: HttpAuthHooks = {}
+export function configureHttpAuth(auth: HttpAuthHooks) { Object.assign(hooks, auth) }
+export const api = createHttp({}, hooks)

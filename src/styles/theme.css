@@ -1,0 +1,233 @@
+/* Ant Design 的设计 Token → 项目语义变量 → Element Plus。
+ * 颜色、间距、圆角在这里统一维护；不要在业务组件里重复定义调色板。
+ * 参考：https://ant.design/docs/react/customize-theme/
+ */
+:root {
+  --app-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Microsoft YaHei', sans-serif;
+  --app-font-size: 14px;
+
+  --app-space-2xs: 4px;
+  --app-space-xs: 8px;
+  --app-space-sm: 12px;
+  --app-space-md: 16px;
+  --app-space-lg: 24px;
+  --app-space-xl: 32px;
+  --app-space-2xl: 48px;
+  --app-page-padding: var(--app-space-lg);
+  --app-card-padding: var(--app-space-lg);
+  --app-form-gap: var(--app-space-lg);
+  --app-control-padding-inline: 11px;
+  --app-control-height: 32px;
+  --app-control-height-sm: 24px;
+  --app-control-height-lg: 40px;
+  --app-select-dropdown-padding: var(--app-space-2xs);
+  --app-select-option-margin: var(--app-space-2xs);
+  --app-select-option-gap: var(--app-space-2xs);
+  --app-select-option-padding: var(--app-space-xs);
+  --app-select-option-radius: var(--app-radius-sm);
+  --app-table-padding-block: var(--app-space-sm);
+  --app-table-padding-inline: var(--app-space-md);
+
+  --app-radius-xs: 2px;
+  --app-radius-sm: 4px;
+  --app-radius-base: 6px;
+  --app-radius-lg: 8px;
+  --app-radius-round: 999px;
+  --app-border-width: 1px;
+  --app-border-style: solid;
+  --app-border: var(--app-border-width) var(--app-border-style) var(--app-color-border);
+  --app-border-secondary: var(--app-border-width) var(--app-border-style) var(--app-color-border-secondary);
+
+  --app-color-primary: #1677ff;
+  --app-color-primary-hover: #4096ff;
+  --app-color-primary-active: #0958d9;
+  --app-color-primary-muted: #91caff;
+  --app-color-primary-border: #bae0ff;
+  --app-color-primary-bg: #e6f4ff;
+  --app-color-selected-bg: var(--app-color-primary);
+  --app-color-selected-text: rgba(255, 255, 255, 0.95);
+  --app-color-success: #52c41a;
+  --app-color-warning: #faad14;
+  --app-color-danger: #ff4d4f;
+
+  --app-color-text: rgba(0, 0, 0, 0.88);
+  --app-color-text-secondary: rgba(0, 0, 0, 0.65);
+  --app-color-text-tertiary: rgba(0, 0, 0, 0.45);
+  --app-color-text-disabled: rgba(0, 0, 0, 0.25);
+  --app-color-border: #d9d9d9;
+  --app-color-border-secondary: #f0f0f0;
+  --app-color-layout: #f5f5f5;
+  --app-color-surface: #ffffff;
+  --app-color-elevated: #ffffff;
+  --app-color-fill: rgba(0, 0, 0, 0.06);
+  --app-color-fill-hover: rgba(0, 0, 0, 0.04);
+  --app-color-fill-subtle: rgba(0, 0, 0, 0.02);
+  --app-color-table-header: #fafafa;
+  --app-color-table-hover: #fafafa;
+  --app-color-table-stripe: #fafafa;
+  --app-color-mask: rgba(0, 0, 0, 0.45);
+  --app-color-loading-mask: rgba(255, 255, 255, 0.8);
+
+  --app-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  --app-shadow-popup: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --app-shadow-card: none;
+
+  /* 侧栏：统一主题色选中态，紧凑且封顶的层级缩进。 */
+  --app-menu-item-height: 40px;
+  --app-menu-item-margin-block: 4px;
+  --app-menu-item-margin-inline: 4px;
+  --app-menu-item-padding-inline: 16px;
+  --app-menu-inline-indent: 8px;
+  --app-menu-max-indent: 24px;
+  --app-menu-icon-size: 14px;
+  --app-menu-icon-gap: var(--app-space-xs);
+  --app-menu-item-radius: var(--app-radius-base);
+  --app-menu-sidebar-padding: var(--app-space-xs);
+  --app-menu-collapsed-width: 64px;
+  --app-menu-item-color: var(--app-color-text-secondary);
+  --app-menu-item-hover-color: var(--app-color-text);
+  --app-menu-item-hover-bg: rgba(0, 0, 0, 0.03);
+  --app-menu-item-selected-bg: var(--app-color-selected-bg);
+  --app-menu-item-selected-color: var(--app-color-selected-text);
+  --app-menu-collapsed-selected-color: var(--app-color-selected-text);
+  --app-menu-ancestor-bg: var(--app-color-primary-bg);
+  --app-menu-ancestor-color: var(--app-color-primary);
+  --app-menu-submenu-bg: transparent;
+}
+
+html.dark {
+  --app-color-primary: #1668dc;
+  --app-color-primary-hover: #3c89e8;
+  --app-color-primary-active: #1554ad;
+  --app-color-primary-muted: #15325b;
+  --app-color-primary-border: #112545;
+  --app-color-primary-bg: #111a2c;
+  --app-color-selected-bg: var(--app-color-primary);
+  --app-color-selected-text: rgba(255, 255, 255, 0.95);
+  --app-color-success: #49aa19;
+  --app-color-warning: #d89614;
+  --app-color-danger: #dc4446;
+  --app-color-text: rgba(255, 255, 255, 0.85);
+  --app-color-text-secondary: rgba(255, 255, 255, 0.65);
+  --app-color-text-tertiary: rgba(255, 255, 255, 0.45);
+  --app-color-text-disabled: rgba(255, 255, 255, 0.25);
+  --app-color-border: #424242;
+  --app-color-border-secondary: #303030;
+  --app-color-layout: #000000;
+  --app-color-surface: #141414;
+  --app-color-elevated: #1f1f1f;
+  --app-color-fill: rgba(255, 255, 255, 0.12);
+  --app-color-fill-hover: rgba(255, 255, 255, 0.08);
+  --app-color-fill-subtle: rgba(255, 255, 255, 0.04);
+  --app-color-table-header: #1d1d1d;
+  --app-color-table-hover: #262626;
+  --app-color-table-stripe: #1d1d1d;
+  --app-color-mask: rgba(0, 0, 0, 0.65);
+  --app-color-loading-mask: rgba(20, 20, 20, 0.8);
+  --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --app-menu-item-hover-bg: rgba(255, 255, 255, 0.06);
+  --app-menu-item-selected-bg: var(--app-color-selected-bg);
+  --app-menu-item-selected-color: var(--app-color-selected-text);
+  --app-menu-collapsed-selected-color: var(--app-color-selected-text);
+  --app-menu-ancestor-color: var(--app-color-primary-hover);
+  --app-shadow-popup: 0 6px 16px rgba(0, 0, 0, 0.45), 0 3px 6px -4px rgba(0, 0, 0, 0.6), 0 9px 28px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* 比按需加载的 :root / html.dark 默认变量更具体，避免切页后主题被覆盖。
+ * 放在 html 而非 #app，Teleport 到 body 的弹窗和下拉也能继承。
+ */
+html:root, html.dark:root {
+  --el-font-family: var(--app-font-family);
+  --el-font-size-base: var(--app-font-size);
+  --el-component-size: var(--app-control-height);
+  --el-component-size-small: var(--app-control-height-sm);
+  --el-component-size-large: var(--app-control-height-lg);
+  --el-color-primary: var(--app-color-primary);
+  --el-color-primary-light-3: var(--app-color-primary-hover);
+  --el-color-primary-light-5: var(--app-color-primary-muted);
+  --el-color-primary-light-7: var(--app-color-primary-border);
+  --el-color-primary-light-8: var(--app-color-primary-bg);
+  --el-color-primary-light-9: var(--app-color-primary-bg);
+  --el-color-primary-dark-2: var(--app-color-primary-active);
+
+  --el-color-success: var(--app-color-success);
+  --el-color-warning: var(--app-color-warning);
+  --el-color-danger: var(--app-color-danger);
+  --el-color-error: var(--app-color-danger);
+  --el-color-info: var(--app-color-primary);
+  /* Element Plus 的状态色阶按当前表面色派生，深色模式也保持协调。 */
+  --el-color-success-light-3: color-mix(in srgb, var(--app-color-success) 70%, var(--app-color-surface));
+  --el-color-success-light-5: color-mix(in srgb, var(--app-color-success) 50%, var(--app-color-surface));
+  --el-color-success-light-7: color-mix(in srgb, var(--app-color-success) 30%, var(--app-color-surface));
+  --el-color-success-light-8: color-mix(in srgb, var(--app-color-success) 20%, var(--app-color-surface));
+  --el-color-success-light-9: color-mix(in srgb, var(--app-color-success) 10%, var(--app-color-surface));
+  --el-color-success-dark-2: color-mix(in srgb, var(--app-color-success) 80%, #000);
+  --el-color-warning-light-3: color-mix(in srgb, var(--app-color-warning) 70%, var(--app-color-surface));
+  --el-color-warning-light-5: color-mix(in srgb, var(--app-color-warning) 50%, var(--app-color-surface));
+  --el-color-warning-light-7: color-mix(in srgb, var(--app-color-warning) 30%, var(--app-color-surface));
+  --el-color-warning-light-8: color-mix(in srgb, var(--app-color-warning) 20%, var(--app-color-surface));
+  --el-color-warning-light-9: color-mix(in srgb, var(--app-color-warning) 10%, var(--app-color-surface));
+  --el-color-warning-dark-2: color-mix(in srgb, var(--app-color-warning) 80%, #000);
+  --el-color-danger-light-3: color-mix(in srgb, var(--app-color-danger) 70%, var(--app-color-surface));
+  --el-color-danger-light-5: color-mix(in srgb, var(--app-color-danger) 50%, var(--app-color-surface));
+  --el-color-danger-light-7: color-mix(in srgb, var(--app-color-danger) 30%, var(--app-color-surface));
+  --el-color-danger-light-8: color-mix(in srgb, var(--app-color-danger) 20%, var(--app-color-surface));
+  --el-color-danger-light-9: color-mix(in srgb, var(--app-color-danger) 10%, var(--app-color-surface));
+  --el-color-danger-dark-2: color-mix(in srgb, var(--app-color-danger) 80%, #000);
+  --el-color-error-light-3: var(--el-color-danger-light-3);
+  --el-color-error-light-5: var(--el-color-danger-light-5);
+  --el-color-error-light-7: var(--el-color-danger-light-7);
+  --el-color-error-light-8: var(--el-color-danger-light-8);
+  --el-color-error-light-9: var(--el-color-danger-light-9);
+  --el-color-error-dark-2: var(--el-color-danger-dark-2);
+  --el-color-info-light-3: var(--el-color-primary-light-3);
+  --el-color-info-light-5: var(--el-color-primary-light-5);
+  --el-color-info-light-7: var(--el-color-primary-light-7);
+  --el-color-info-light-8: var(--el-color-primary-light-8);
+  --el-color-info-light-9: var(--el-color-primary-light-9);
+  --el-color-info-dark-2: var(--el-color-primary-dark-2);
+
+  --el-text-color-primary: var(--app-color-text);
+  --el-text-color-regular: var(--app-color-text);
+  --el-text-color-secondary: var(--app-color-text-secondary);
+  --el-text-color-placeholder: var(--app-color-text-tertiary);
+  --el-text-color-disabled: var(--app-color-text-disabled);
+  --el-bg-color: var(--app-color-surface);
+  --el-bg-color-page: var(--app-color-layout);
+  --el-bg-color-overlay: var(--app-color-elevated);
+  --el-fill-color: var(--app-color-fill);
+  --el-fill-color-light: var(--app-color-fill-hover);
+  --el-fill-color-lighter: var(--app-color-fill-subtle);
+  --el-fill-color-extra-light: var(--app-color-fill-subtle);
+  --el-fill-color-dark: var(--app-color-fill);
+  --el-fill-color-darker: var(--app-color-fill);
+  --el-fill-color-blank: var(--app-color-surface);
+  --el-border-color: var(--app-color-border);
+  --el-border-color-light: var(--app-color-border-secondary);
+  --el-border-color-lighter: var(--app-color-border-secondary);
+  --el-border-color-extra-light: var(--app-color-border-secondary);
+  --el-border-color-dark: var(--app-color-border);
+  --el-border-color-darker: var(--app-color-border);
+  --el-border-color-hover: var(--app-color-primary-hover);
+  --el-border-width: var(--app-border-width);
+  --el-border-style: var(--app-border-style);
+  --el-border-radius-base: var(--app-radius-base);
+  --el-border-radius-small: var(--app-radius-sm);
+  --el-border-radius-round: var(--app-radius-round);
+  --el-box-shadow: var(--app-shadow-popup);
+  --el-box-shadow-light: var(--app-shadow-popup);
+  --el-box-shadow-lighter: var(--app-shadow-sm);
+  --el-box-shadow-dark: var(--app-shadow-popup);
+  --el-mask-color: var(--app-color-loading-mask);
+  --el-overlay-color-lighter: var(--app-color-mask);
+  --el-disabled-bg-color: var(--app-color-fill-hover);
+  --el-disabled-text-color: var(--app-color-text-disabled);
+  --el-disabled-border-color: var(--app-color-border);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --app-page-padding: var(--app-space-md);
+    --app-card-padding: var(--app-space-md);
+  }
+}

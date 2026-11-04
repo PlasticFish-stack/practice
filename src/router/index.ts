@@ -1,23 +1,11 @@
-import { createMemoryHistory, createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-
-const routes: RouteRecordRaw[] = [
-    {
-        path: '/',
-        children: [
-            {
-                path: '',
-                component: () => import('@/views/Home/Home.vue'),
-            },
-            {
-                path: 'login',
-                component: () => import('@/views/Login/Login.vue')
-            },
-        ]
-    },
-
-]
+import { createRouter, createWebHistory } from 'vue-router'
+import { routes } from './routes'
 
 export const router = createRouter({
-    history: createWebHistory(),
-    routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+})
+
+router.afterEach((to, _from, failure) => {
+  if (!failure) document.title = to.meta.title ? `${to.meta.title} · 设备管理` : '设备管理'
 })

@@ -1,0 +1,15 @@
+.system-editor.el-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: 90dvh;
+  margin-block: 5dvh;
+}
+.system-editor .el-dialog__header { flex-shrink: 0; }
+.system-editor .el-dialog__body { min-height: 0; overflow-y: auto; }
+.system-editor .app-form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-block: var(--app-space-sm) var(--app-space-2xs);
+  background: var(--el-dialog-bg-color);
+}

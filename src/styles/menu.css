@@ -1,0 +1,128 @@
+/* 侧栏及其 Teleport 浮层共用同一套规则，不影响其他水平导航。
+ * 参考用户指定的 Pro 预览：https://preview.pro.ant.design/welcome/
+ */
+:where(.app-menu, .app-menu-popper) {
+  --el-menu-item-height: var(--app-menu-item-height);
+  --el-menu-sub-item-height: var(--app-menu-item-height);
+  --el-menu-text-color: var(--app-menu-item-color);
+  --el-menu-active-color: var(--app-menu-item-selected-color);
+  --el-menu-hover-text-color: var(--app-menu-item-hover-color);
+  --el-menu-hover-bg-color: var(--app-menu-item-hover-bg);
+  --el-menu-bg-color: transparent;
+  --el-menu-base-level-padding: var(--app-menu-item-padding-inline);
+  --el-menu-level-padding: var(--app-menu-inline-indent);
+  --el-menu-icon-width: var(--app-menu-icon-size);
+}
+
+:where(.app-menu, .app-menu-popper) :is(.el-menu-item, .el-sub-menu__title) {
+  width: calc(100% - var(--app-menu-item-margin-inline) * 2);
+  height: var(--app-menu-item-height);
+  line-height: var(--app-menu-item-height);
+  margin: var(--app-menu-item-margin-block) var(--app-menu-item-margin-inline);
+  border-radius: var(--app-menu-item-radius);
+  padding-inline-end: var(--app-menu-item-padding-inline);
+}
+
+:where(.app-menu, .app-menu-popper) :is(.el-menu-item, .el-sub-menu__title) > .el-icon:not(.el-sub-menu__icon-arrow) {
+  width: var(--app-menu-icon-size);
+  font-size: var(--app-menu-icon-size);
+  margin-inline-end: var(--app-menu-icon-gap);
+}
+
+html :is(.app-menu, .app-menu-popper):not(.el-menu--collapse) .el-sub-menu > .el-sub-menu__title {
+  padding-inline-end: calc(var(--app-menu-item-padding-inline) + 18px);
+}
+
+/* 原生箭头的 width: inherit 会继承菜单项宽度，需固定图标宽度。 */
+html :is(.app-menu, .app-menu-popper) .el-sub-menu__icon-arrow {
+  width: 12px;
+}
+
+:where(.app-menu, .app-menu-popper) .el-menu-item:not(.is-disabled):hover {
+  color: var(--app-menu-item-hover-color);
+  background-color: var(--app-menu-item-hover-bg);
+}
+
+:where(.app-menu, .app-menu-popper) .el-sub-menu:not(.is-disabled) > .el-sub-menu__title:hover {
+  color: var(--app-menu-item-hover-color);
+  background-color: var(--app-menu-item-hover-bg);
+}
+
+:where(.app-menu, .app-menu-popper) .el-menu-item:not(.is-disabled):active {
+  background-color: var(--app-menu-item-selected-bg);
+}
+
+/* 叶子使用实心主题色；父级用浅主题底色表示当前分支。 */
+:where(.app-menu, .app-menu-popper) .el-menu-item.is-active,
+:where(.app-menu, .app-menu-popper) .el-menu-item.is-active:not(.is-disabled):hover {
+  color: var(--app-menu-item-selected-color);
+  background-color: var(--app-menu-item-selected-bg);
+}
+
+:where(.app-menu, .app-menu-popper) .el-sub-menu.is-active > .el-sub-menu__title,
+:where(.app-menu, .app-menu-popper) .el-sub-menu.is-active:not(.is-disabled) > .el-sub-menu__title:hover {
+  color: var(--app-menu-ancestor-color);
+  background-color: var(--app-menu-ancestor-bg);
+}
+
+:where(.app-menu, .app-menu-popper) :is(.el-menu-item, .el-sub-menu__title):focus-visible {
+  outline: 2px solid var(--app-color-primary);
+  outline-offset: -2px;
+}
+
+/* 让每层容器包含菜单项的上下 margin，避免折叠时高度少算、裁掉底部圆角。 */
+.app-menu, .app-menu .el-menu--inline {
+  display: flow-root;
+}
+
+.app-menu .el-menu--inline {
+  background-color: var(--app-menu-submenu-bg);
+}
+
+/* 色块保持统一宽度，文字逐级缩进并封顶，避免深层菜单过窄。 */
+html .app-menu.el-menu--vertical:not(.el-menu--collapse) :is(.el-menu-item, .el-sub-menu__title) {
+  padding-inline-start: calc(var(--app-menu-item-padding-inline) + min(var(--el-menu-level) * var(--app-menu-inline-indent), var(--app-menu-max-indent)));
+}
+
+/* 视觉上直接展开；保留非零时长，让原生 Transition 正常执行高度清理。 */
+.app-menu .el-collapse-transition-enter-active,
+.app-menu .el-collapse-transition-leave-active {
+  transition-duration: 1ms;
+}
+
+/* 收起时将图标居中到菜单项的内容区；宽度动画由外层 viewport 管理。 */
+.app-menu.el-menu--collapse > .el-menu-item,
+.app-menu.el-menu--collapse > .el-sub-menu > .el-sub-menu__title,
+.app-menu.el-menu--collapse .el-menu-tooltip__trigger {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.app-menu.el-menu--collapse > .el-menu-item .menu-label,
+.app-menu.el-menu--collapse > .el-sub-menu > .el-sub-menu__title .menu-label {
+  display: none;
+}
+
+.app-menu.el-menu--collapse > .el-menu-item .el-icon,
+.app-menu.el-menu--collapse > .el-sub-menu > .el-sub-menu__title > .el-icon {
+  width: 16px;
+  font-size: 16px;
+  margin-inline: 0;
+}
+
+.app-menu.el-menu--collapse > .el-menu-item.is-active,
+.app-menu.el-menu--collapse > .el-sub-menu.is-active > .el-sub-menu__title {
+  color: var(--app-menu-collapsed-selected-color);
+  background-color: var(--app-menu-item-selected-bg);
+}
+
+/* 弹出菜单的每一层是独立浮层，不累加侧栏的嵌套缩进。 */
+.app-menu-popper {
+  --el-menu-bg-color: var(--app-color-elevated);
+  --el-menu-level-padding: 0px;
+}
+
+.app-menu-popper .el-menu--popup {
+  padding-block: var(--app-menu-item-margin-block);
+  border-radius: var(--app-menu-item-radius);
+}

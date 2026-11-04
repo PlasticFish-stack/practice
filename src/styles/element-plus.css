@@ -1,0 +1,169 @@
+/* 仅适配 Element Plus 没有继承全局 Token，或仍使用编译期尺寸的部分。
+ * html 前缀保证按需 CSS 后加载也不会覆盖这些规则，不需要 !important。
+ */
+html .el-card {
+  --el-card-border-radius: var(--app-radius-lg);
+  --el-card-border-color: var(--app-color-border-secondary);
+  --el-card-padding: var(--app-card-padding);
+}
+
+html .el-dialog {
+  --el-dialog-border-radius: var(--app-radius-lg);
+  --el-dialog-padding-primary: var(--app-card-padding);
+  --el-dialog-bg-color: var(--app-color-elevated);
+}
+
+html .el-popper {
+  --el-popper-border-radius: var(--app-radius-lg);
+}
+
+html .el-message, html .el-notification {
+  border-radius: var(--app-radius-lg);
+}
+
+html .el-form-item {
+  margin-bottom: var(--app-form-gap);
+}
+
+/* 保留 size、输入分组、数字框按钮等原生结构，只调整默认文本框内边距。 */
+html .el-input:not(.el-input--small):not(.el-input--large):not(:where(.el-input-number *)) > .el-input__wrapper {
+  padding-inline: var(--app-control-padding-inline);
+}
+
+html .el-select__wrapper:not(.el-select__wrapper--small):not(.el-select__wrapper--large) {
+  padding-inline: var(--app-control-padding-inline);
+}
+
+/* 每个选项独立留白与圆角；不改动 Select V2 虚拟列表的行高计算。 */
+html .el-select-dropdown__list:not(.el-vl__window) {
+  padding-block: var(--app-select-dropdown-padding);
+}
+
+html .el-select-dropdown__list:not(.el-vl__window) .el-select-dropdown__item {
+  margin-inline: var(--app-select-option-margin);
+  padding-inline-start: var(--app-select-option-padding);
+  border-radius: var(--app-select-option-radius);
+  height: var(--app-control-height);
+  line-height: var(--app-control-height);
+}
+
+html .el-select-dropdown__list:not(.el-vl__window) .el-select-dropdown__item + .el-select-dropdown__item {
+  margin-block-start: var(--app-select-option-gap);
+}
+
+html .el-select-dropdown__item.is-hovering:not(.is-disabled) {
+  background-color: var(--app-color-fill-hover);
+}
+
+html .el-select-dropdown__item.is-selected:not(.is-disabled) {
+  color: var(--app-color-selected-text);
+  background-color: var(--app-color-selected-bg);
+}
+
+/* 头像、主题等 Dropdown 与 Select 共用圆角、留白和选中态。 */
+html .el-dropdown-menu {
+  padding-block: var(--app-select-dropdown-padding);
+}
+
+html .el-dropdown-menu__item {
+  min-height: var(--app-control-height);
+  box-sizing: border-box;
+  margin-inline: var(--app-select-option-margin);
+  padding: var(--app-space-2xs) var(--app-select-option-padding);
+  border-radius: var(--app-select-option-radius);
+}
+
+html .el-dropdown-menu__item + .el-dropdown-menu__item {
+  margin-block-start: var(--app-select-option-gap);
+}
+
+html .el-dropdown-menu__item:not(.is-disabled):is(:hover, :focus) {
+  color: var(--app-color-text);
+  background-color: var(--app-color-fill-hover);
+}
+
+html .el-dropdown-menu__item.is-selected:not(.is-disabled),
+html .el-dropdown-menu__item.is-selected:not(.is-disabled):is(:hover, :focus) {
+  color: var(--app-color-selected-text);
+  background-color: var(--app-color-selected-bg);
+}
+
+html .el-textarea__inner {
+  padding: var(--app-space-2xs) var(--app-control-padding-inline);
+}
+
+/* 原生的 1px inset shadow 就是输入边框，保留它；取消额外光晕和渐变。 */
+html .el-input__wrapper, html .el-select__wrapper, html .el-textarea__inner {
+  transition: none;
+}
+
+/* 非实心按钮只改变边框，背景和文字维持静止态；不影响禁用和实心按钮。 */
+html .el-button:not(:where(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info)),
+html .el-button:is(.is-plain, .is-dashed, .is-text, .is-link) {
+  --el-button-hover-bg-color: var(--el-button-bg-color);
+  --el-button-active-bg-color: var(--el-button-bg-color);
+  --el-button-hover-text-color: var(--el-button-text-color);
+  --el-button-active-text-color: var(--el-button-text-color);
+  --el-button-hover-link-text-color: var(--el-button-text-color);
+  --el-button-active-color: var(--el-button-text-color);
+  --el-button-hover-border-color: var(--el-color-primary);
+  --el-button-active-border-color: var(--el-color-primary);
+}
+
+html .el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info):is(.is-plain, .is-dashed) {
+  --el-button-hover-border-color: var(--el-button-text-color);
+  --el-button-active-border-color: var(--el-button-text-color);
+}
+
+/* text/link 保留无边框结构；键盘 focus-visible 仍沿用原生清晰轮廓。 */
+html .el-button.is-text:not(.is-disabled):is(:hover, :active) {
+  color: var(--el-button-text-color);
+  background-color: transparent;
+}
+
+html .el-button.is-text.is-has-bg:not(.is-disabled):is(:hover, :active) {
+  background-color: var(--el-fill-color-light);
+}
+
+html .el-table {
+  --el-table-border-color: var(--app-color-border-secondary);
+  --el-table-header-bg-color: var(--app-color-table-header);
+  --el-table-header-text-color: var(--app-color-text);
+  --el-table-row-hover-bg-color: var(--app-color-table-hover);
+  --el-table-current-row-bg-color: var(--app-color-primary-bg);
+  --el-table-tr-bg-color: var(--app-color-surface);
+  --el-table-bg-color: var(--app-color-surface);
+}
+
+html .el-table--large {
+  --app-table-padding-block: var(--app-space-md);
+}
+
+html .el-table--small {
+  --app-table-padding-block: var(--app-space-xs);
+  --app-table-padding-inline: var(--app-space-xs);
+}
+
+/* 固定列会覆盖其他单元格；斑马纹必须是不透明背景，不能直接使用 fill 的透明色。 */
+html .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--app-color-table-stripe);
+}
+
+html .el-table .el-table__cell:not(.gutter):not(.el-table__expanded-cell) {
+  padding-block: var(--app-table-padding-block);
+}
+
+html .el-table .cell {
+  padding-inline: var(--app-table-padding-inline);
+  line-height: 22px;
+}
+
+/* 窄选择列、展开列保留原生图标空间，避免 padding 把图标挤出。 */
+html .el-table .el-table-column--selection .cell,
+html .el-table .el-table__expand-column .cell {
+  padding-inline: var(--app-space-xs);
+}
+
+html .el-table__expanded-cell[class*='cell'] {
+  padding: var(--app-space-md) var(--app-space-lg);
+}
