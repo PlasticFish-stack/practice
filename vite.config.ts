@@ -2,7 +2,7 @@ import vue from '@vitejs/plugin-vue';
 import { mockApiPlugin } from './mock/server.ts';
 import path from 'path';
 import { existsSync, readdirSync } from 'node:fs';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
@@ -15,6 +15,14 @@ const elementStyles = readdirSync(styleRoot)
 
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => ({
+  server: {
+    proxy: {
+      '/api/v1': {
+        target: loadEnv(mode, process.cwd(), '').XRAY_API_TARGET || 'http://172.21.185.75:18080',
+        changeOrigin: true,
+      },
+    },
+  },
   // 隔离测试服务与日常开发的预构建缓存，避免并发重建导致旧依赖 504。
   cacheDir: process.env.PLAYWRIGHT_TEST ? 'node_modules/.vite-e2e' : 'node_modules/.vite',
   optimizeDeps: {

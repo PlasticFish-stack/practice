@@ -75,6 +75,7 @@ async function login() {
           登录
         </el-button>
       </el-form>
+      <p class="observer-entry"><router-link to="/observe">打开 Xray 观察面板</router-link></p>
       <p
         v-if="demoHint"
         class="demo-hint"
@@ -114,6 +115,9 @@ async function login() {
 .demo-hint {
   font-size: 12px;
   line-height: 1.6;
+}
+.observer-entry a {
+  color: var(--app-color-primary);
 }
 .el-alert {
   margin-bottom: 16px;

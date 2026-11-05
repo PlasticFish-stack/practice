@@ -60,7 +60,8 @@ test('landing page and menu reflect permissions; personal pages remain available
     const { router, auth, access } = setup({ session: async () => profile(permissions) });
     await router.push('/');
     assert.equal(router.currentRoute.value.path, landing);
-    assert.equal(access.accessibleMenus(router, auth).length, permissions.length + 1);
+    assert.equal(access.accessibleMenus(router, auth).length, permissions.length + 2);
+    assert.ok(access.accessibleMenus(router, auth).some((item) => item.index === 'observe'));
     assert.equal(auth.can('devices:update'), false);
   }
 });

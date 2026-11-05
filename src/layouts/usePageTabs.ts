@@ -15,12 +15,12 @@ export function usePageTabs() {
     tabs = usePageTabsStore();
   const busy = shallowRef(false);
   const activeKey = computed(() => route.path);
-  const allowed = computed(() => auth.authenticated && canAccessRoute(route, auth));
+  const allowed = computed(() => canAccessRoute(route, auth));
   let disposed = false;
   let scrollFrame = 0;
   function describe(target: TabRoute): PageTabInput | null {
     if (
-      !auth.authenticated ||
+      (!auth.authenticated && target.meta.authentication !== 'observer') ||
       typeof target.name !== 'string' ||
       target.name === 'layout' ||
       target.meta.public ||
@@ -41,7 +41,7 @@ export function usePageTabs() {
     };
   }
   function sync() {
-    if (!auth.authenticated) {
+    if (!auth.authenticated && route.meta.authentication !== 'observer') {
       tabs.clear();
       return;
     }
@@ -124,9 +124,9 @@ export function usePageTabs() {
       else if (value === 'right' && index >= 0)
         tabs.retain(tabs.items.slice(0, index + 1).map((tab) => tab.key));
       else if (value === 'refresh' && index >= 0) {
-        await auth.ensureSession(true);
+        if (route.meta.authentication !== 'observer') await auth.ensureSession(true);
         if (disposed) return;
-        if (!auth.authenticated) {
+        if (!auth.authenticated && route.meta.authentication !== 'observer') {
           await router.replace({ name: 'login', query: { redirect: route.fullPath } });
           return;
         }

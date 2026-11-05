@@ -40,6 +40,7 @@ test('implemented pages and their group have menu metadata', () => {
   assert.deepEqual(menus.map((item) => item.path).sort(), [
     '/account/center',
     '/device',
+    '/observe',
     '/playground',
     '/playground/charts',
     '/playground/terminal',
@@ -49,8 +50,42 @@ test('implemented pages and their group have menu metadata', () => {
     '/system/roles',
     '/system/users',
   ]);
-  for (const item of menus.filter((item) => !['/account/center', '/system'].includes(item.path)))
+  for (const item of menus.filter(
+    (item) => !['/account/center', '/system', '/observe'].includes(item.path),
+  ))
     assert.ok(item.meta.permissions.length > 0);
+});
+
+test('observer uses the existing layout and remains separate from Cookie permissions', async () => {
+  const router = createTestRouter();
+  const { accessibleMenus, canAccessRoute, installAuthGuard } =
+    createLoader()('src/router/access.ts');
+  let sessionChecks = 0;
+  const auth = {
+    user: null,
+    authenticated: false,
+    can: () => false,
+    ensureSession: async () => {
+      sessionChecks++;
+    },
+  };
+  installAuthGuard(router, auth);
+  await router.push('/observe');
+  assert.deepEqual(
+    router.currentRoute.value.matched.map((record) => record.name),
+    ['layout', 'observe'],
+  );
+  assert.equal(sessionChecks, 0);
+  assert.equal(router.currentRoute.value.meta.public, undefined);
+  assert.deepEqual(
+    Array.from(accessibleMenus(router, auth), (item) => item.index),
+    ['observe'],
+  );
+  assert.equal(canAccessRoute(router.resolve('/device'), auth), false);
+  assert.equal(canAccessRoute(router.resolve('/observe'), auth), true);
+  await router.push('/device');
+  assert.equal(router.currentRoute.value.name, 'login');
+  assert.ok(sessionChecks > 0);
 });
 
 test('account group preserves existing URLs and redirects to personal center', async () => {

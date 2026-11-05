@@ -149,7 +149,14 @@ async function fullscreen() {
         </template>
       </el-dropdown>
       <div class="tools-divider" />
-      <AppAccountMenu />
+      <AppAccountMenu v-if="auth.authenticated" />
+      <router-link
+        v-else
+        to="/login"
+        class="workspace-login"
+      >
+        后台登录
+      </router-link>
     </nav>
     <el-dialog
       v-model="helpOpen"
@@ -254,6 +261,12 @@ async function fullscreen() {
   height: 20px;
   border-left: 1px solid var(--el-border-color-lighter);
   margin: 0 6px;
+}
+.workspace-login {
+  color: var(--el-color-primary);
+  font-size: 13px;
+  white-space: nowrap;
+  text-decoration: none;
 }
 .help-content {
   color: var(--el-text-color-regular);

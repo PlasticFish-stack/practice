@@ -25,7 +25,12 @@ configureHttpAuth({
     const hadSession = auth.authenticated;
     auth.invalidate();
     const route = router.currentRoute.value;
-    if (hadSession && route.name && !route.meta.public) {
+    if (
+      hadSession &&
+      route.name &&
+      !route.meta.public &&
+      route.meta.authentication !== 'observer'
+    ) {
       void router.replace({ name: 'login', query: { redirect: route.fullPath } });
     }
   },
@@ -33,6 +38,7 @@ configureHttpAuth({
 app.use(router);
 // 返回浏览器标签时重新校验，处理其他标签退出、切换用户和权限变更。
 window.addEventListener('focus', () => {
+  if (router.currentRoute.value.meta.authentication === 'observer') return;
   if (!auth.authenticated || auth.busy) return;
   void auth
     .ensureSession(true)

@@ -6,6 +6,8 @@ type Auth = ReturnType<typeof useAuthStore>;
 type AccessAuth = Pick<Auth, 'can'> & Partial<Pick<Auth, 'user'>>;
 
 export function canAccessRoute(route: Pick<RouteLocationNormalized, 'matched'>, auth: AccessAuth) {
+  // 只允许显式声明的观察叶子页显示令牌入口；数据权限仍由观察 API 验证。
+  if (route.matched.at(-1)?.meta.authentication === 'observer') return true;
   // 检查每一层，子路由不能覆盖父路由的权限要求。
   return route.matched.every(
     (record) =>
@@ -17,14 +19,22 @@ export function canAccessRoute(route: Pick<RouteLocationNormalized, 'matched'>, 
 }
 
 export function accessibleMenus(router: Router, auth: AccessAuth) {
-  return buildMenuTree(router, (required) => auth.can(required), auth.user?.navigation);
+  return buildMenuTree(
+    router,
+    (required, record) =>
+      record.meta?.authentication === 'observer' ||
+      (record.name === 'layout' && Array.isArray(required) && required.length === 0) ||
+      auth.can(required),
+    auth.user?.navigation,
+  );
 }
 
 export function defaultDestination(router: Router, auth: AccessAuth) {
   const menus = accessibleMenus(router, auth);
   // 个人中心始终可用，但首页优先进入用户实际可操作的功能页面。
   return (
-    firstMenuPath(menus, (node) => node.index !== 'account-center') ??
+    firstMenuPath(menus, (node) => !['account-center', 'observe'].includes(node.index)) ??
+    firstMenuPath(menus, (node) => node.index !== 'observe') ??
     firstMenuPath(menus) ??
     '/403'
   );
@@ -52,6 +62,7 @@ export function safeDestination(value: unknown, router: Router, auth: AccessAuth
 
 export function installAuthGuard(router: Router, auth: Auth) {
   router.beforeEach(async (to) => {
+    if (to.meta.authentication === 'observer') return true;
     if (to.meta.public && to.name !== 'login') return true;
     try {
       // 每次导航向服务端确认会话；并发导航由 Store 合并请求。

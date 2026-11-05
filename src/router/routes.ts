@@ -15,6 +15,19 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: '首页' },
     children: [
       {
+        path: 'observe',
+        name: 'observe',
+        component: () => import('@/views/observe/ObservePage.vue'),
+        meta: {
+          title: 'Xray 观察面板',
+          authentication: 'observer',
+          menu: true,
+          menuOrder: 100,
+          icon: 'DataAnalysis',
+          keepAlive: false,
+        },
+      },
+      {
         path: 'account',
         name: 'account',
         redirect: { name: 'account-center' },
