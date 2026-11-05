@@ -1,6 +1,15 @@
 /* 仅适配 Element Plus 没有继承全局 Token，或仍使用编译期尺寸的部分。
  * html 前缀保证按需 CSS 后加载也不会覆盖这些规则，不需要 !important。
  */
+html .el-button > .el-icon,
+html .el-dropdown-menu__item > .el-icon {
+  font-size: var(--app-icon-size);
+}
+
+html .el-pagination :is(.btn-prev, .btn-next) .el-icon {
+  font-size: 16px;
+}
+
 html .el-card {
   --el-card-border-radius: var(--app-radius-lg);
   --el-card-border-color: var(--app-color-border-secondary);

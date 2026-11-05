@@ -4,8 +4,11 @@
 
 ## 界面与行为
 
-- 56px 顶部导航：品牌入口、侧栏折叠、导航搜索、帮助、全屏、主题、头像。
-- 顶部和侧边的折叠按钮使用同一份状态；窄屏默认折叠，按钮和账户菜单保持可用。
+- 56px 顶部导航：Logo、当前页面标题、移动端侧栏折叠、导航搜索、帮助、全屏、主题、头像。鲸栈 Logo 使用 `assets/whalestack.svg`，完整显示为 32px，垂直居中并保留四周留白；深色主题切换为 `assets/whalestack-dark.svg` 反白版。标题随路由切换，优先使用服务端菜单名称，与页签和面包屑一致。
+- 顶部不再显示 Workspace 副标题。顶部折叠按钮仅在 760px 及以下显示，桌面端使用侧栏边缘的折叠按钮；两者共用状态，窄屏默认折叠。
+- 浏览器图标为 `public/favicon.svg`，Apple 触屏图标为 `public/apple-touch-icon.png`，网页名称为「鲸栈」。更换 SVG 图标后，可运行 `node scripts/prepare-brand.mjs` 重新生成 PNG 兼容图标与 Apple 触屏图标；顶部直接使用矢量文件。
+- 界面图标统一使用本地 Material Symbols Outlined（`src/components/icons`），包括菜单、工具栏、表格操作和 Element Plus 内置控件图标。Vite 将 Element Plus 的图标导入映射到同一模块；服务端菜单仍使用原有图标名称。来源与许可证见该目录的 `NOTICE.md` 和 `LICENSE`，更新方式为运行 `node scripts/sync-material-icons.mjs` 后格式化生成文件。
+- `assets/deepseek_menu.png` 贴住侧栏左下角，随菜单展开与折叠在 180px 和 64px 之间平滑缩放，不会突然显隐。低于 600px 的屏幕高度隐藏装饰图，优先保留菜单空间；减少动态效果偏好下取消过渡。
 - 内容区顶部包含可关闭的多页签栏及 KeepAlive 页面缓存，支持页面状态保留、独立刷新、批量关闭和权限清理，详见 [page-tabs.md](./page-tabs.md)。
 - 面包屑和页面标题来自当前路由。
 - 搜索快捷键：Windows/Linux 使用 Ctrl+K，macOS 使用 ⌘+K；支持上下键和回车跳转，仅展示可访问页面。

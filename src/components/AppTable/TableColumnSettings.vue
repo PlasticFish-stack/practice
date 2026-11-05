@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onDeactivated, shallowRef } from 'vue';
-import { Setting, ArrowUp, ArrowDown, Lock } from '@element-plus/icons-vue';
+import { Setting, ArrowUp, ArrowDown, Lock } from '@/components/icons';
 import { ElButton, ElCheckbox, ElIcon, ElInputNumber, ElPopover } from 'element-plus';
 import type { ColumnSettingItem } from './useTableColumns';
 import DragHandleIcon from './DragHandleIcon.vue';
@@ -241,6 +241,7 @@ function drop(event: DragEvent, item: ColumnSettingItem) {
   cursor: grabbing;
 }
 .locked-icon {
+  font-size: var(--app-icon-size);
   width: 22px;
   color: var(--el-text-color-placeholder);
 }

@@ -37,7 +37,8 @@ html :is(.app-menu, .app-menu-popper):not(.el-menu--collapse) .el-sub-menu > .el
 
 /* 原生箭头的 width: inherit 会继承菜单项宽度，需固定图标宽度。 */
 html :is(.app-menu, .app-menu-popper) .el-sub-menu__icon-arrow {
-  width: 12px;
+  width: 14px;
+  font-size: 14px;
 }
 
 :where(.app-menu, .app-menu-popper) .el-menu-item:not(.is-disabled):hover {
@@ -118,8 +119,8 @@ html .app-menu.el-menu--vertical:not(.el-menu--collapse) :is(.el-menu-item, .el-
 
 .app-menu.el-menu--collapse > .el-menu-item .el-icon,
 .app-menu.el-menu--collapse > .el-sub-menu > .el-sub-menu__title > .el-icon {
-  width: 16px;
-  font-size: 16px;
+  width: var(--app-menu-icon-size);
+  font-size: var(--app-menu-icon-size);
   margin-inline: 0;
 }
 

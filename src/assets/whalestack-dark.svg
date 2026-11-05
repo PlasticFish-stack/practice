@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>鲸栈 · 深色背景版</title>
+  <path d="M21 12 5 32l16 20M43 12l16 20-16 20" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="22" y="22" width="20" height="20" rx="5" fill="#22d3ee" transform="rotate(45 32 32)" />
+</svg>

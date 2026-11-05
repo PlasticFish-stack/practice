@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch } from 'vue';
-import { CircleCheck, Message, OfficeBuilding, Postcard } from '@element-plus/icons-vue';
+import { CircleCheck, Message, OfficeBuilding, Postcard } from '@/components/icons';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import UserAvatar from '@/components/UserAvatar.vue';

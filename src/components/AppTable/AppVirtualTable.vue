@@ -317,7 +317,8 @@ const virtualColumns = computed<Column[]>(() =>
     align: column.align as Column['align'],
     fixed:
       column.fixed === 'right' ? ('right' as Column['fixed']) : column.fixed ? true : undefined,
-    class: column.className,
+    class: [column.className, index === 0 ? 'app-leading-cell' : ''].filter(Boolean).join(' '),
+    headerClass: index === 0 ? 'app-leading-cell' : undefined,
     sortable: !!column.sortable,
     headerCellRenderer:
       column.type === 'selection'
@@ -462,6 +463,9 @@ defineExpose<TableHandle<Row>>({
 }
 .virtual-table :deep(.el-table-v2__row-cell) {
   border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.virtual-table :deep(.app-leading-cell) {
+  padding-inline-start: 20px;
 }
 .virtual-table :deep(.is-cell-selected) {
   background: var(--el-color-primary-light-9);

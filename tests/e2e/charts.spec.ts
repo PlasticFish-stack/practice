@@ -87,7 +87,7 @@ test('dark charts resize with the sidebar and fit a mobile screen', async ({ pag
   const svg = trend.locator('svg');
   await expect(svg).toBeVisible();
   const width = await svg.getAttribute('width');
-  await page.getByRole('banner').getByRole('button', { name: '收起侧栏', exact: true }).click();
+  await page.locator('#aside-btn').click();
   await expect(svg).not.toHaveAttribute('width', width!);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(async () => Number(await svg.getAttribute('width'))).toBeLessThan(390);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, shallowRef, useTemplateRef, watch } from 'vue';
-import { Document, Right, Search } from '@element-plus/icons-vue';
+import { Document, Right, Search } from '@/components/icons';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { accessibleMenus, canAccessRoute } from '@/router/access';
@@ -161,7 +161,7 @@ onScopeDispose(() => window.removeEventListener('keydown', shortcut));
   background: var(--el-fill-color-light);
 }
 .search-trigger .el-icon {
-  font-size: 17px;
+  font-size: var(--app-icon-size-lg);
 }
 .search-trigger kbd {
   border: var(--app-border);

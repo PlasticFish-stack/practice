@@ -3,6 +3,7 @@ node_modules/
 dist/
 dist-ssr/
 artifacts/
+output/
 test-results/
 playwright-report/
 coverage/

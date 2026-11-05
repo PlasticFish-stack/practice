@@ -410,6 +410,7 @@ test('header stays usable on mobile and shared sidebar controls remain synchroni
   await expect(page.getByRole('textbox', { name: '昵称', exact: true })).toBeInViewport();
   await page.getByRole('button', { name: '取消编辑', exact: true }).click();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.locator('.collapse-action').click();
+  await expect(page.locator('.collapse-action')).toHaveCount(0);
+  await page.locator('#aside-btn').click();
   await expect(page.locator('#aside-btn')).toHaveAttribute('aria-expanded', 'true');
 });

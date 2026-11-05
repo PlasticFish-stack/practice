@@ -534,29 +534,14 @@ defineExpose<TableHandle<Row>>({
   width: 14px;
   height: 14px;
   margin-right: 8px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 2px;
   box-sizing: border-box;
   vertical-align: middle;
-  transform: none;
-  background: var(--el-bg-color);
 }
 .app-table :deep(.el-table__expand-icon > .el-icon) {
-  display: none;
-}
-.app-table :deep(.el-table__expand-icon::before),
-.app-table :deep(.el-table__expand-icon::after) {
-  content: '';
-  position: absolute;
-  width: 7px;
-  height: 1px;
-  background: var(--el-text-color-regular);
-}
-.app-table :deep(.el-table__expand-icon:not(.el-table__expand-icon--expanded)::after) {
-  transform: rotate(90deg);
+  font-size: 14px;
 }
 .app-table :deep(.el-table__expand-icon:hover) {
-  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 .app-table :deep(.el-table__placeholder) {
   width: 22px;
@@ -566,6 +551,10 @@ defineExpose<TableHandle<Row>>({
 }
 .app-table :deep(.app-tree-toggle-cell .cell) {
   padding-inline: 8px;
+}
+/* 留白放在首列内容内部，表头底色与行分隔线仍铺满卡片。 */
+.app-table :deep(.el-table tr > .el-table__cell:first-child > .cell) {
+  padding-inline-start: 20px;
 }
 .app-table :deep(.app-tree-toggle-cell .el-table__indent) {
   display: none;

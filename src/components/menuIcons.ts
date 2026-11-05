@@ -11,7 +11,7 @@ import {
   Tools,
   User,
   UserFilled,
-} from '@element-plus/icons-vue';
+} from '@/components/icons';
 import type { MENU_ICONS } from '@/auth/navigation';
 
 const icons = {

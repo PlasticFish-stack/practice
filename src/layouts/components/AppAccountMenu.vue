@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue';
-import { ArrowDown, Setting, SwitchButton, User } from '@element-plus/icons-vue';
+import { ArrowDown, Setting, SwitchButton, User } from '@/components/icons';
 import { ElMessage } from 'element-plus';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -138,7 +138,7 @@ async function command(value: string) {
   font-size: 14px;
 }
 .account-chevron {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 .account-dropdown {

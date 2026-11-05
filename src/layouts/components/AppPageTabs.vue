@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, useTemplateRef, watch } from 'vue';
-import { Close, MoreFilled } from '@element-plus/icons-vue';
+import { Close, MoreFilled } from '@/components/icons';
 import type { PageTab } from '@/stores/pageTabs';
 
 const props = defineProps<{ items: readonly PageTab[]; activeKey: string; busy?: boolean }>();
@@ -228,6 +228,7 @@ function move(index: number) {
   white-space: nowrap;
 }
 .tab-close {
+  font-size: 14px;
   width: 24px;
   height: 24px;
   margin-inline-end: 4px;
@@ -238,6 +239,7 @@ function move(index: number) {
   background: var(--app-color-fill);
 }
 .tab-actions {
+  font-size: 16px;
   flex-shrink: 0;
   width: 30px;
   height: 30px;

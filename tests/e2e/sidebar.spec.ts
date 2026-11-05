@@ -20,6 +20,43 @@ async function login(page: Page, path = '/device') {
   await expect(page).toHaveURL(path);
 }
 
+test('header title follows the current page and desktop has only the sidebar collapse control', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const title = page.locator('.header-page-title');
+  await expect(title).toHaveText('设备列表');
+  await expect(page.locator('.header-brand > svg')).toHaveCount(0);
+  const logo = page.locator('.header-logo img');
+  await expect(logo).toBeVisible();
+  await expect(logo).toHaveAttribute('alt', '鲸栈');
+  await expect
+    .poll(() => logo.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  await expect(logo).toHaveCSS('width', '32px');
+  await expect(logo).toHaveCSS('height', '32px');
+  const favicon = page.locator('link[rel="icon"]');
+  await expect(favicon).toHaveAttribute('type', 'image/svg+xml');
+  const iconResponse = await page.request.get((await favicon.getAttribute('href'))!);
+  expect(iconResponse.ok()).toBe(true);
+  expect(iconResponse.headers()['content-type']).toContain('image/svg+xml');
+  await expect(page.locator('.app-header .collapse-action')).toHaveCount(0);
+  await page
+    .locator('.app-menu > .el-sub-menu > .el-sub-menu__title')
+    .filter({ hasText: '系统管理' })
+    .click();
+  await page.getByRole('menuitem', { name: '用户管理', exact: true }).click();
+  await expect(title).toHaveText('用户管理');
+  await page.getByRole('tab', { name: '设备列表', exact: true }).click();
+  await expect(title).toHaveText('设备列表');
+  await page.screenshot({ path: 'artifacts/header-page-title.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(title).toBeVisible();
+  await expect(page.locator('.app-header .collapse-action')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('switching pages does not reopen a manually closed unrelated menu group', async ({ page }) => {
   await login(page);
   const menu = page.locator('.app-menu');
@@ -120,17 +157,34 @@ test('404 returns users without device permission to an accessible home page', a
 test('expanding the sidebar restores the active group without opening unrelated groups', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.addInitScript(() => localStorage.setItem('ui.theme', 'light'));
   await login(page, '/playground/websocket');
   const menu = page.locator('.app-menu');
   const playground = menu.locator(':scope > .el-sub-menu').filter({ hasText: '开发演示' });
   const system = menu.locator(':scope > .el-sub-menu').filter({ hasText: '系统管理' });
   await expect(playground).toHaveClass(/is-opened/);
+  const image = page.locator('.sidebar-illustration img');
+  await expect(image).toBeVisible();
+  await expect
+    .poll(() => image.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  await expect(image).toHaveCSS('width', '180px');
+  const bounds = await image.boundingBox();
+  const sidebar = await page.locator('.app-sidebar').boundingBox();
+  expect(bounds!.x).toBe(sidebar!.x);
+  expect(bounds!.y + bounds!.height).toBeCloseTo(sidebar!.y + sidebar!.height, 0);
+  await page.screenshot({ path: 'artifacts/sidebar-illustration-expanded.png', fullPage: true });
   await page.locator('#aside-btn').click();
   await expect(menu).toHaveClass(/el-menu--collapse/);
+  await expect(image).toBeVisible();
+  await expect(image).toHaveCSS('width', '64px');
+  await page.screenshot({ path: 'artifacts/sidebar-illustration-collapsed.png', fullPage: true });
   await page.locator('#aside-btn').click();
   await expect(menu).not.toHaveClass(/el-menu--collapse/);
   await expect(playground).toHaveClass(/is-opened/);
   await expect(system).not.toHaveClass(/is-opened/);
+  await expect(image).toHaveCSS('width', '180px');
 });
 
 test('deep-linked nested menus reveal all ancestors after restoring the sidebar', async ({

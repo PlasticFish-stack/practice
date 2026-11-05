@@ -1,25 +1,29 @@
 <script setup lang="ts">
-import { shallowRef } from 'vue';
-import {
-  Check,
-  Expand,
-  Fold,
-  FullScreen,
-  Moon,
-  QuestionFilled,
-  Sunny,
-} from '@element-plus/icons-vue';
-import { useFullscreen } from '@vueuse/core';
+import { computed, shallowRef } from 'vue';
+import { Check, Expand, Fold, FullScreen, Moon, QuestionFilled, Sunny } from '@/components/icons';
+import { useFullscreen, useMediaQuery } from '@vueuse/core';
 import { ElMessage } from 'element-plus';
-import { RouterLink } from 'vue-router';
+import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useThemeTransition } from '@/composables/useThemeTransition';
 import AppAccountMenu from './AppAccountMenu.vue';
 import AppNavigationSearch from './AppNavigationSearch.vue';
+import brandLogo from '@/assets/whalestack.svg';
+import brandLogoDark from '@/assets/whalestack-dark.svg';
 
 const props = defineProps<{ collapsed: boolean }>();
 const emit = defineEmits<{ toggleSidebar: [] }>();
 const preferences = usePreferencesStore();
+const route = useRoute();
+const auth = useAuthStore();
+const mobile = useMediaQuery('(max-width: 760px)');
+const pageTitle = computed(
+  () =>
+    auth.user?.navigation?.find((item) => item.routeName === route.name)?.title ??
+    route.meta.title ??
+    '工作台',
+);
 const themeTransition = useThemeTransition();
 function changeTheme(value: string) {
   void themeTransition.setTheme(value);
@@ -38,40 +42,20 @@ async function fullscreen() {
 <template>
   <header class="app-header">
     <div class="header-brand">
-      <RouterLink
-        to="/"
-        class="brand-link"
-        aria-label="设备管理首页"
+      <div
+        class="header-logo"
+        title="鲸栈"
       >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 28 28"
-          aria-hidden="true"
-        >
-          <path
-            d="M14 1 27 14 14 27 1 14Z"
-            fill="var(--app-color-primary)"
-          />
-          <path
-            d="M14 6 22 14 14 22 6 14Z"
-            fill="var(--el-bg-color)"
-          />
-          <rect
-            x="11"
-            y="11"
-            width="6"
-            height="6"
-            rx="1.5"
-            fill="var(--app-color-primary-hover)"
-          />
-        </svg>
-        <strong>
-          设备管理
-          <span>Workspace</span>
-        </strong>
-      </RouterLink>
+        <img
+          :src="preferences.dark ? brandLogoDark : brandLogo"
+          alt="鲸栈"
+          width="32"
+          height="32"
+          draggable="false"
+        />
+      </div>
       <button
+        v-if="mobile"
         class="header-action collapse-action"
         type="button"
         :aria-label="props.collapsed ? '展开侧栏' : '收起侧栏'"
@@ -83,6 +67,12 @@ async function fullscreen() {
           <Fold v-else />
         </el-icon>
       </button>
+      <strong
+        class="header-page-title"
+        :title="pageTitle"
+      >
+        {{ pageTitle }}
+      </strong>
     </div>
     <nav
       class="header-tools"
@@ -184,6 +174,7 @@ async function fullscreen() {
 
 <style scoped>
 .app-header {
+  --header-padding-inline: var(--app-page-padding);
   height: 56px;
   flex-shrink: 0;
   position: sticky;
@@ -192,37 +183,42 @@ async function fullscreen() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--app-page-padding);
+  padding: 0 var(--header-padding-inline);
   gap: var(--app-space-md);
   background: var(--el-bg-color);
   border-bottom: var(--app-border-secondary);
   box-sizing: border-box;
 }
-.header-brand,
-.brand-link {
+.header-brand {
   display: flex;
   align-items: center;
 }
 .header-brand {
-  gap: 28px;
+  gap: var(--app-space-md);
   min-width: 0;
+  flex: 1;
+  height: 100%;
 }
-.brand-link {
-  gap: 10px;
-  text-decoration: none;
-  color: var(--el-text-color-primary);
-  white-space: nowrap;
+.header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 100%;
+  flex-shrink: 0;
 }
-.brand-link strong {
+.header-logo img {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+.header-page-title {
   font-size: 17px;
   font-weight: 600;
-}
-.brand-link strong span {
-  color: var(--el-text-color-placeholder);
-  font-size: 11px;
-  font-weight: 400;
-  margin-left: 10px;
-  letter-spacing: 0.5px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .header-tools {
   display: flex;
@@ -230,6 +226,7 @@ async function fullscreen() {
   gap: var(--app-space-2xs);
   height: 100%;
   min-width: 0;
+  flex-shrink: 0;
 }
 .header-action {
   display: inline-flex;
@@ -244,7 +241,7 @@ async function fullscreen() {
   border-radius: var(--app-radius-base);
   color: var(--el-text-color-regular);
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--app-icon-size-lg);
 }
 .header-action:hover {
   background: var(--el-fill-color-light);
@@ -273,26 +270,20 @@ async function fullscreen() {
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
-@media (max-width: 1000px) {
-  .brand-link strong span {
-    display: none;
-  }
-  .header-brand {
-    gap: var(--app-space-md);
-  }
-}
 @media (max-width: 600px) {
   .app-header {
-    padding: 0 var(--app-space-sm);
+    --header-padding-inline: var(--app-space-sm);
     gap: var(--app-space-xs);
   }
-  .brand-link strong,
   .secondary-action,
   .tools-divider {
     display: none;
   }
   .header-brand {
-    gap: var(--app-space-xs);
+    gap: var(--app-space-sm);
+  }
+  .header-page-title {
+    font-size: 15px;
   }
   .header-tools {
     gap: 0;

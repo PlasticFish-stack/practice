@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ArrowLeft } from '@element-plus/icons-vue';
+import { ArrowLeft } from '@/components/icons';
+import deepseekImage from '@/assets/deepseek_menu.png';
 const isCollapse = defineModel<boolean>('collapsed', { default: false });
 </script>
 
@@ -24,6 +25,19 @@ const isCollapse = defineModel<boolean>('collapsed', { default: false });
         </el-icon>
       </button>
       <slot :isCollapse="isCollapse"></slot>
+      <div
+        class="sidebar-illustration"
+        :class="{ 'is-collapsed': isCollapse }"
+        aria-hidden="true"
+      >
+        <img
+          :src="deepseekImage"
+          alt=""
+          width="180"
+          height="180"
+          draggable="false"
+        />
+      </div>
     </div>
   </el-aside>
 </template>
@@ -36,6 +50,47 @@ const isCollapse = defineModel<boolean>('collapsed', { default: false });
   flex-shrink: 0;
   overflow: visible;
   background: var(--el-bg-color);
+}
+
+.sidebar-illustration {
+  flex-shrink: 0;
+  height: 180px;
+  margin-inline: calc(-1 * var(--app-menu-sidebar-padding));
+  margin-bottom: calc(-1 * var(--app-menu-sidebar-padding));
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  transition: height 200ms ease;
+}
+
+.sidebar-illustration img {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  height: auto;
+  transform-origin: bottom left;
+  transition: width 200ms ease;
+}
+
+.sidebar-illustration.is-collapsed {
+  height: 64px;
+}
+
+.sidebar-illustration.is-collapsed img {
+  width: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-illustration,
+  .sidebar-illustration img {
+    transition: none;
+  }
+}
+
+@media (max-height: 600px) {
+  .sidebar-illustration {
+    display: none;
+  }
 }
 
 #aside-container {
@@ -67,7 +122,8 @@ const isCollapse = defineModel<boolean>('collapsed', { default: false });
   }
 
   #aside-btn-icon {
-    opacity: 0.5;
+    font-size: 16px;
+    opacity: 0.7;
     transition: opacity 0.2s;
   }
 

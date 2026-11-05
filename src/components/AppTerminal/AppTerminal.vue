@@ -12,7 +12,7 @@ import {
 } from 'vue';
 import { useFullscreen } from '@vueuse/core';
 import { ElButton, ElIcon, ElMessage } from 'element-plus';
-import { CopyDocument, Delete, FullScreen, Monitor } from '@element-plus/icons-vue';
+import { CopyDocument, Delete, FullScreen, Monitor } from '@/components/icons';
 import { Terminal } from '@xterm/xterm';
 import type { IDisposable, ITheme } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';

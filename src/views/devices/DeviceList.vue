@@ -9,7 +9,7 @@ import {
   shallowRef,
 } from 'vue';
 import { GetDevices } from '@/api/device';
-import { Refresh } from '@element-plus/icons-vue';
+import { Refresh } from '@/components/icons';
 import { useAuthStore } from '@/stores/auth';
 import { PERMISSIONS } from '@/auth/permissions';
 import type { Device, DeviceSearch } from '@/types/device';
