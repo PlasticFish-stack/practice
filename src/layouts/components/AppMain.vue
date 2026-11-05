@@ -45,7 +45,6 @@ const breadcrumbs = computed(() =>
           {{ item.title }}
         </el-breadcrumb-item>
       </el-breadcrumb>
-      <!-- <div class="page-heading"><h1>{{ pageTitle }}</h1><span v-if="route.name === 'devices'">查看和管理工作空间中的设备</span></div> -->
       <AppPageView
         :items="tabs.items"
         :active-key="activeKey"

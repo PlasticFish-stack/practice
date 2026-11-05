@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-async function login(page: Page, path = '/device') {
+async function login(page: Page, path = '/system/users') {
   await page.goto(path);
   await page.getByRole('textbox', { name: '用户名' }).fill('admin');
   await page.getByLabel('密码', { exact: true }).fill('Demo@123456');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await expect(page).toHaveURL(path);
 }
-async function fixture(page: Page) {
+async function fixture(page: Page, component = 'ComponentsHarness.vue') {
   await page.route('**/src/router/routes.ts*', async (request) => {
     const response = await request.fetch();
     await request.fulfill({
@@ -17,13 +17,13 @@ async function fixture(page: Page) {
         (await response.text()) +
         `\nroutes.find(r => r.name === 'layout').children.push({
       path: 'component-fixture', name: 'component-fixture',
-      component: () => import('/tests/fixtures/ComponentsHarness.vue'),
-      meta: { title: '组件测试', permissions: ['devices:read'] }
+      component: () => import('/tests/fixtures/${component}'),
+      meta: { title: '组件测试', permissions: ['system:users:read'] }
     });`,
     });
   });
   await login(page, '/component-fixture');
-  await page.getByPlaceholder('选择测试日期').waitFor();
+  if (component === 'ComponentsHarness.vue') await page.getByPlaceholder('选择测试日期').waitFor();
 }
 
 for (const theme of ['light', 'dark']) {
@@ -32,12 +32,12 @@ for (const theme of ['light', 'dark']) {
   }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.addInitScript((theme) => localStorage.setItem('ui.theme', theme), theme);
-    await login(page);
+    await fixture(page, 'StripedTableHarness.vue');
     const table = page.locator('.app-table');
     const rows = table.locator('.el-table__body > tbody > tr.el-table__row');
     const start = rows.nth(0).locator('td').nth(1);
     const finish = rows.nth(3).locator('td').nth(2);
-    await page.getByRole('heading', { name: '设备列表', exact: true }).hover();
+    await page.getByRole('heading', { name: '测试条纹表格', exact: true }).hover();
     const plainBackground = await start.evaluate((cell) => getComputedStyle(cell).backgroundColor);
     const stripeBackground = await finish.evaluate(
       (cell) => getComputedStyle(cell).backgroundColor,
@@ -68,7 +68,7 @@ for (const theme of ['light', 'dark']) {
     for (const cell of await selected.all()) {
       await expect(cell).toHaveCSS('background-color', expected);
     }
-    await page.getByRole('heading', { name: '设备列表', exact: true }).hover();
+    await page.getByRole('heading', { name: '测试条纹表格', exact: true }).hover();
     await page.screenshot({ path: `artifacts/table-range-${theme}.png`, fullPage: true });
     await page.keyboard.press('Escape');
     await expect(selected).toHaveCount(0);
@@ -162,73 +162,4 @@ test('table forwards native columns and events, honors template slots, supports 
   await table.getByRole('button', { name: '删除 A', exact: true }).click();
   await expect(table.getByText('slot-A', { exact: true })).toHaveCount(0);
   await expect(table.getByText('slot-B', { exact: true })).toBeVisible();
-});
-
-test('device search persists through pagination, page-size changes query once and edit validation preserves zero', async ({
-  page,
-}) => {
-  await login(page);
-  await page.getByRole('textbox', { name: '设备 ID', exact: true }).fill('1');
-  let request = page.waitForResponse(
-    (response) =>
-      response.url().includes('/api/devices?') &&
-      new URL(response.url()).searchParams.get('id') === '1',
-  );
-  await page.getByRole('button', { name: '搜索', exact: true }).click();
-  await request;
-  const table = page.locator('.app-table');
-  request = page.waitForResponse(
-    (response) =>
-      response.url().includes('/api/devices?') &&
-      new URL(response.url()).searchParams.get('page') === '2',
-  );
-  await table.locator('.el-pagination .btn-next').click();
-  const second = await request;
-  expect(new URL(second.url()).searchParams.get('id')).toBe('1');
-  await expect(table.locator('.el-table__body-wrapper tbody tr')).toHaveCount(5);
-  const requests: string[] = [];
-  page.on('request', (request) => {
-    if (request.method() === 'GET' && request.url().includes('/api/devices?'))
-      requests.push(request.url());
-  });
-  request = page.waitForResponse(
-    (response) =>
-      response.url().includes('/api/devices?') &&
-      new URL(response.url()).searchParams.get('pageSize') === '20',
-  );
-  await table.locator('.el-pagination .el-select').click();
-  await page.getByRole('option', { name: /20/ }).click();
-  await request;
-  await expect(table.locator('.el-table__body-wrapper tbody tr')).toHaveCount(15);
-  await page.evaluate(
-    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-  );
-  expect(requests).toHaveLength(1);
-  expect(new URL(requests[0]).searchParams.get('page')).toBe('1');
-  expect(new URL(requests[0]).searchParams.get('id')).toBe('1');
-  await table.getByRole('button', { name: '编辑', exact: true }).first().click();
-  const dialog = page.getByRole('dialog', { name: '编辑设备', exact: true });
-  await dialog.getByRole('textbox', { name: '名称', exact: true }).fill('');
-  await dialog.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(dialog.getByText('请输入设备名称', { exact: true })).toBeVisible();
-  await dialog.getByRole('textbox', { name: '名称', exact: true }).fill('零亮度设备');
-  await dialog.getByRole('spinbutton', { name: '亮度', exact: true }).fill('0');
-  const save = page.waitForResponse(
-    (response) =>
-      response.request().method() === 'PATCH' && response.url().includes('/api/devices/'),
-  );
-  await dialog.getByRole('button', { name: '保存', exact: true }).click();
-  const saved = await save;
-  expect(saved.status()).toBe(200);
-  expect(saved.request().postDataJSON().brightness).toBe(0);
-  await expect(dialog).toBeHidden();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(table.locator('.el-pagination__sizes')).toHaveCount(0);
-  await expect(table.locator('.el-pagination .btn-next')).toBeVisible();
-  const bounds = await table.locator('.table-pagination').evaluate((el) => {
-    const pager = el.querySelector('.el-pagination')!.getBoundingClientRect();
-    const footer = el.getBoundingClientRect();
-    return { pagerRight: pager.right, footerRight: footer.right };
-  });
-  expect(bounds.pagerRight).toBeLessThanOrEqual(bounds.footerRight);
 });

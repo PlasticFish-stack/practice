@@ -35,33 +35,33 @@ function setup(api = {}) {
 
 test('anonymous deep-link goes to login and keeps return destination', async () => {
   const { router } = setup();
-  await router.push('/device?page=2');
+  await router.push('/system/users?page=2');
   assert.equal(router.currentRoute.value.name, 'login');
-  assert.equal(router.currentRoute.value.query.redirect, '/device?page=2');
+  assert.equal(router.currentRoute.value.query.redirect, '/system/users?page=2');
 });
 
 test('session restoration grants exact permissions, never privileges based on role names', async () => {
   const { auth, router } = setup({
-    session: async () => ({ ...profile(['devices:read']), roles: ['admin'] }),
+    session: async () => ({ ...profile(['system:users:read']), roles: ['admin'] }),
   });
-  await router.push('/device');
-  assert.equal(router.currentRoute.value.name, 'devices');
-  assert.equal(auth.can('devices:update'), false);
-  await router.push('/playground/websocket');
+  await router.push('/system/users');
+  assert.equal(router.currentRoute.value.name, 'system-users');
+  assert.equal(auth.can('system:users:write'), false);
+  await router.push('/system/roles');
   assert.equal(router.currentRoute.value.name, 'forbidden');
 });
 
 test('landing page and menu reflect permissions; personal pages remain available to signed-in users', async () => {
   for (const [permissions, landing] of [
-    [['devices:read'], '/device'],
-    [['playground:read'], '/playground/charts'],
+    [['system:users:read'], '/system/users'],
+    [['system:roles:read'], '/system/roles'],
     [[], '/account/center'],
   ]) {
     const { router, auth, access } = setup({ session: async () => profile(permissions) });
     await router.push('/');
     assert.equal(router.currentRoute.value.path, landing);
-    assert.equal(access.accessibleMenus(router, auth).length, permissions.length + 1);
-    assert.equal(auth.can('devices:update'), false);
+    assert.equal(access.accessibleMenus(router, auth)[0].children.length, permissions.length + 1);
+    assert.equal(auth.can('system:users:write'), false);
   }
 });
 
@@ -71,7 +71,7 @@ test('system group enters the first permitted page; ordinary users can only acce
   assert.equal(manager.router.currentRoute.value.name, 'system-roles');
   await manager.router.push('/system/users');
   assert.equal(manager.router.currentRoute.value.name, 'forbidden');
-  const ordinary = setup({ session: async () => profile(['devices:read']) });
+  const ordinary = setup({ session: async () => profile([]) });
   await ordinary.router.push('/system');
   assert.equal(ordinary.router.currentRoute.value.name, 'account-center');
   const group = ordinary.access
@@ -84,7 +84,7 @@ test('system group enters the first permitted page; ordinary users can only acce
 });
 
 test('unsafe login redirects cannot escape app or bypass route permissions', async () => {
-  const { router, auth, access } = setup({ session: async () => profile(['devices:read']) });
+  const { router, auth, access } = setup({ session: async () => profile(['system:users:read']) });
   await auth.ensureSession();
   for (const value of [
     'https://evil.test',
@@ -92,18 +92,18 @@ test('unsafe login redirects cannot escape app or bypass route permissions', asy
     '/\\evil.test',
     '/login',
     '/session-error',
-    '/playground/websocket',
+    '/system/roles',
     '/missing',
     '/',
   ]) {
-    assert.equal(access.safeDestination(value, router, auth), '/device');
+    assert.equal(access.safeDestination(value, router, auth), '/system/users');
   }
   assert.equal(
-    access.safeDestination('/device?q=lamp#table', router, auth),
-    '/device?q=lamp#table',
+    access.safeDestination('/system/users?q=lamp#table', router, auth),
+    '/system/users?q=lamp#table',
   );
   await router.push('/login?redirect=//evil.test');
-  assert.equal(router.currentRoute.value.path, '/device');
+  assert.equal(router.currentRoute.value.path, '/system/users');
 });
 
 test('session outage and malformed response fail closed with a retryable error page', async () => {
@@ -114,7 +114,7 @@ test('session outage and malformed response fail closed with a retryable error p
     async () => ({ id: 'incomplete' }),
   ]) {
     const { router, auth } = setup({ session });
-    await router.push('/device');
+    await router.push('/system/users');
     assert.equal(router.currentRoute.value.name, 'session-error');
     assert.equal(auth.authenticated, false);
   }
@@ -135,14 +135,14 @@ test('concurrent session restoration shares request; late response cannot restor
     second = auth.ensureSession();
   assert.equal(calls, 1);
   auth.invalidate();
-  resolve(profile(['devices:read']));
+  resolve(profile(['system:users:read']));
   await Promise.all([first, second]);
   assert.equal(auth.authenticated, false);
 });
 
 test('logout network failure does not falsely claim the server session was revoked', async () => {
   const { auth } = setup({
-    session: async () => profile(['devices:read']),
+    session: async () => profile(['system:users:read']),
     logout: async () => {
       throw Error('offline');
     },
@@ -157,14 +157,14 @@ test('parent and child permissions are both required and absence of user denies 
   const { access, auth } = setup();
   const route = {
     matched: [
-      { meta: { permissions: ['devices:read'] } },
-      { meta: { permissions: ['devices:update'] } },
+      { meta: { permissions: ['system:users:read'] } },
+      { meta: { permissions: ['system:users:write'] } },
     ],
   };
   assert.equal(access.canAccessRoute(route, auth), false);
-  auth.user = profile(['devices:update']);
+  auth.user = profile(['system:users:write']);
   assert.equal(access.canAccessRoute(route, auth), false);
-  auth.user = profile(['devices:update', 'devices:read']);
+  auth.user = profile(['system:users:write', 'system:users:read']);
   assert.equal(access.canAccessRoute(route, auth), true);
 });
 
@@ -173,12 +173,12 @@ test('session expiry on a later navigation returns to login', async () => {
   const { router, auth } = setup({
     session: async () => {
       if (expired) throw unauthorized();
-      return profile(['devices:read']);
+      return profile(['system:users:read']);
     },
   });
-  await router.push('/device');
+  await router.push('/system/users');
   expired = true;
-  await router.push('/device?page=3');
+  await router.push('/system/users?page=3');
   assert.equal(router.currentRoute.value.name, 'login');
   assert.equal(auth.user, null);
 });
@@ -186,7 +186,7 @@ test('session expiry on a later navigation returns to login', async () => {
 test('profile updates use the server result and cannot restore a signed-out user', async () => {
   let resolveSave;
   const { auth } = setup({
-    session: async () => profile(['devices:read']),
+    session: async () => profile(['system:users:read']),
     updateProfile: () =>
       new Promise((resolve) => {
         resolveSave = resolve;
@@ -204,13 +204,13 @@ test('profile updates use the server result and cannot restore a signed-out user
   };
   const save = auth.saveProfile(fields);
   assert.equal(auth.savingProfile, true);
-  resolveSave({ ...profile(['devices:read']), ...fields });
+  resolveSave({ ...profile(['system:users:read']), ...fields });
   await save;
   assert.equal(auth.user.displayName, 'Updated');
   assert.equal(auth.savingProfile, false);
   const stale = auth.saveProfile(fields);
   auth.invalidate();
-  resolveSave({ ...profile(['devices:read']), ...fields });
+  resolveSave({ ...profile(['system:users:read']), ...fields });
   await assert.rejects(stale, /会话已变更/);
   assert.equal(auth.user, null);
 });
@@ -219,9 +219,9 @@ test('profile validation rejects privilege fields and unsafe avatar sources', ()
   const load = createLoader();
   const { validateProfile, profileFromUser } = load('src/auth/profile.ts');
   const { parseSessionUser } = load('src/auth/permissions.ts');
-  const fields = profileFromUser(profile(['devices:read']));
+  const fields = profileFromUser(profile(['system:users:read']));
   assert.equal(validateProfile(fields), null);
-  assert.match(validateProfile({ ...fields, permissions: ['devices:update'] }), /不可修改/);
+  assert.match(validateProfile({ ...fields, permissions: ['system:users:write'] }), /不可修改/);
   for (const avatarUrl of [
     'javascript:alert(1)',
     '//external.test/a.png',

@@ -31,7 +31,7 @@ async function login() {
 <template>
   <main class="login-page">
     <section class="login-card">
-      <h1>设备管理</h1>
+      <h1>后台管理</h1>
       <p>登录以访问你的工作空间</p>
       <el-alert
         v-if="error"

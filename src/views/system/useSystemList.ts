@@ -2,7 +2,7 @@ import { onActivated, onDeactivated, onScopeDispose, reactive, shallowRef } from
 import axios from 'axios';
 import { systemApi } from '@/api/system';
 import type { SystemCatalog, SystemQuery } from '@/types/system';
-import type { Pagination } from '@/types/device';
+import type { Pagination } from '@/types/pagination';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { canAccessRoute } from '@/router/access';

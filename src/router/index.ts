@@ -7,5 +7,5 @@ export const router = createRouter({
 });
 
 router.afterEach((to, _from, failure) => {
-  if (!failure) document.title = to.meta.title ? `${to.meta.title} · 设备管理` : '设备管理';
+  if (!failure) document.title = to.meta.title ? `${to.meta.title} · 后台管理` : '后台管理';
 });

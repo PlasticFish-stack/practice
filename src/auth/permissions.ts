@@ -1,9 +1,6 @@
 import type { MenuSetting } from '../types/system.ts';
 
 export const PERMISSIONS = {
-  deviceRead: 'devices:read',
-  deviceUpdate: 'devices:update',
-  playgroundRead: 'playground:read',
   userRead: 'system:users:read',
   userWrite: 'system:users:write',
   roleRead: 'system:roles:read',
@@ -21,14 +18,6 @@ export const PERMISSION_CATALOG: readonly {
   group: string;
   requires?: readonly Permission[];
 }[] = [
-  { code: PERMISSIONS.deviceRead, label: '查看设备', group: '设备管理' },
-  {
-    code: PERMISSIONS.deviceUpdate,
-    label: '编辑设备',
-    group: '设备管理',
-    requires: [PERMISSIONS.deviceRead],
-  },
-  { code: PERMISSIONS.playgroundRead, label: '访问开发演示', group: '开发演示' },
   { code: PERMISSIONS.userRead, label: '查看用户', group: '用户管理' },
   {
     code: PERMISSIONS.userWrite,

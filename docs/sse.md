@@ -25,7 +25,7 @@
 import { onMounted } from 'vue';
 import { useSSE } from '@/composables/useSSE';
 
-const { connect, close, status, error, lastEvent } = useSSE('/api/devices/events', {
+const { connect, close, status, error, lastEvent } = useSSE('/api/events', {
   onMessage(message) {
     // 所有事件都会到这里，包含自定义 event；data 保持字符串。
     if (message.event === 'device') {

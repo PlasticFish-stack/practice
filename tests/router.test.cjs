@@ -20,8 +20,8 @@ test('login is standalone; existing deep links preserve query and hash', async (
   await router.push('/login');
   assert.equal(router.currentRoute.value.name, 'login');
   assert.equal(router.currentRoute.value.matched.length, 1);
-  await router.push('/playground/websocket?mode=echo#messages');
-  assert.equal(router.currentRoute.value.name, 'websocket-demo');
+  await router.push('/system/roles?mode=echo#messages');
+  assert.equal(router.currentRoute.value.name, 'system-roles');
   assert.equal(router.currentRoute.value.query.mode, 'echo');
   assert.equal(router.currentRoute.value.hash, '#messages');
 });
@@ -39,11 +39,6 @@ test('implemented pages and their group have menu metadata', () => {
     .filter((item) => item.meta.menu);
   assert.deepEqual(menus.map((item) => item.path).sort(), [
     '/account/center',
-    '/device',
-    '/playground',
-    '/playground/charts',
-    '/playground/terminal',
-    '/playground/websocket',
     '/system',
     '/system/menus',
     '/system/roles',

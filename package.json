@@ -37,7 +37,6 @@
     "@types/node": "^24.19.2",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/tsconfig": "^0.9.1",
-    "@xterm/headless": "6.0.0",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-vue": "^10.12.0",

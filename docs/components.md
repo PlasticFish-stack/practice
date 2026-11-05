@@ -70,7 +70,7 @@ function save(values: Model) {
 
 `actions` 插槽提供 `submit`、`reset`、`disabled`。自定义提交按钮使用 `native-type="submit"`，或调用 `submit()`；两种方式都经过校验。组件 ref 暴露 `validate()`、`submit()`、`reset(values?)`、`clearValidate()`，对应类型为 `FormHandle<Model>`。
 
-实际用法见 `views/devices/components/DeviceSearch.vue`、`DeviceEditDialog.vue` 与 `views/account/components/ProfileEditor.vue`。
+实际用法见 `views/account/components/ProfileEditor.vue` 和系统管理页面。
 
 ## AppTable
 
@@ -80,7 +80,7 @@ import AppTable from '@/components/AppTable/AppTable.vue';
 import type { ColumnOptions } from '@/components/AppTable/types';
 
 type Row = { id: number; name: string; status: string };
-const rows: Row[] = [{ id: 1, name: '设备 A', status: 'online' }];
+const rows: Row[] = [{ id: 1, name: '条目 A', status: 'online' }];
 const columns: ColumnOptions<Row>[] = [
   { type: 'selection', width: 48 },
   { prop: 'name', label: '名称', minWidth: 160, showOverflowTooltip: true },
@@ -97,7 +97,7 @@ function edit(row: Row) {
     :rows="rows"
     :column-options="columns"
     :table-options="{ rowKey: 'id' }"
-    title="设备列表"
+    title="数据列表"
   >
     <template #cell-status="{ row }">
       <el-tag>{{ row.status }}</el-tag>
@@ -150,7 +150,7 @@ function edit(row: Row) {
 AppTable 默认在工具栏提供“列设置”：显示/隐藏数据列、拖动排序（也可用上移/下移按钮）、输入列宽、恢复默认。数据列表头右边缘支持拖动调整宽度；虚拟表格使用相同交互，手柄还支持左右方向键每次调整 10px。
 
 ```vue
-<AppTable table-key="devices.list" :rows="rows" :column-options="columns" />
+<AppTable table-key="records.list" :rows="rows" :column-options="columns" />
 ```
 
 - `tableKey` 是稳定的表格标识，配置保存到当前浏览器 localStorage，各表互不影响。没有配置时，仅在当前组件实例内记忆；如需按账户隔离，可传入包含用户 ID 的 key。
@@ -199,10 +199,10 @@ AppTable 的 `virtual` 默认是 `'auto'`：**没有配置分页且 `rows.length
 
 `page-change` 参数为 `{ page, pageSize }`。修改每页条数时回到第一页；父组件写回服务器分页数据不会重复发出查询。窄屏自动使用紧凑分页，保留翻页和页码。独立的 `AppPagination` 也可继续使用。
 
-页面负责在请求成功后更新行、总数和分页，并保留筛选条件；并发取消和错误提示仍由页面管理。实际示例见 `views/devices/DeviceList.vue`。
+页面负责在请求成功后更新行、总数和分页，并保留筛选条件；并发取消和错误提示仍由页面管理。实际示例见系统管理页面。
 
 ## 验证
 
 `pnpm build` 包括字段配置和组件插槽的 TypeScript 检查。`tests/types/components.ts` 检查无效字段、控件类型、下拉选项和字符串日期配置能否被类型系统拒绝。
 
-`pnpm test:e2e` 包含表单校验、连续输入焦点、日期、条件字段、重置、数字零值、表格原生属性、分组表头、选择、排序、展开、动态列，以及真实设备搜索、分页和保存流程。
+`pnpm test:e2e` 包含表单校验、连续输入焦点、日期、条件字段、重置、数字零值、表格原生属性、分组表头、选择、排序、展开、动态列，以及用户与角色管理流程。

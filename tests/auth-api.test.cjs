@@ -4,7 +4,7 @@ const { createServer } = require('node:http');
 const { once } = require('node:events');
 const { createLoader } = require('./helpers/load-ts.cjs');
 
-test('HTTP session, CSRF, authorization, update conflicts and logout are enforced server-side', async () => {
+test('HTTP session, CSRF, authorization, profile updates and logout are enforced server-side', async () => {
   const handle = createLoader()('mock/server.ts').createMockApi();
   const server = createServer((req, res) => {
     void handle(req, res, () => {
@@ -48,7 +48,7 @@ test('HTTP session, CSRF, authorization, update conflicts and logout are enforce
   }
   try {
     const anonymous = client();
-    assert.equal((await anonymous.request('/api/devices')).response.status, 401);
+    assert.equal((await anonymous.request('/api/system/users')).response.status, 401);
     assert.equal(
       (await anonymous.request('/api/auth/login', { method: 'POST', csrf: false, data: {} }))
         .response.status,
@@ -70,18 +70,7 @@ test('HTTP session, CSRF, authorization, update conflicts and logout are enforce
     assert.equal(loggedIn.response.status, 200);
     assert.ok(loggedIn.response.headers.getSetCookie()[0].includes('HttpOnly'));
     assert.equal(Object.hasOwn(loggedIn.body.data, 'token'), false);
-    const list = await viewer.request('/api/devices?page=1&pageSize=10');
-    assert.equal(list.response.status, 200);
-    assert.equal(list.body.data.list.length, 10);
-    assert.equal(
-      (
-        await viewer.request('/api/devices/1', {
-          method: 'PATCH',
-          data: { name: 'hacked', version: 0 },
-        })
-      ).response.status,
-      403,
-    );
+    assert.equal((await viewer.request('/api/system/users')).response.status, 403);
     const changedProfile = {
       displayName: '测试观察员',
       email: 'updated@example.test',
@@ -116,9 +105,7 @@ test('HTTP session, CSRF, authorization, update conflicts and logout are enforce
       ).response.status,
       400,
     );
-    assert.deepEqual((await viewer.request('/api/auth/session')).body.data.permissions, [
-      'devices:read',
-    ]);
+    assert.deepEqual((await viewer.request('/api/auth/session')).body.data.permissions, []);
     const oldSession = viewer.cookies.get('mock-session');
     await viewer.login('viewer');
     assert.notEqual(viewer.cookies.get('mock-session'), oldSession);
@@ -128,41 +115,16 @@ test('HTTP session, CSRF, authorization, update conflicts and logout are enforce
 
     const tester = client();
     await tester.login('tester');
-    assert.equal((await tester.request('/api/devices')).response.status, 403);
+    assert.equal((await tester.request('/api/system/users')).response.status, 403);
     const admin = client();
     await admin.login('admin');
-    const device = (await admin.request('/api/devices')).body.data.list[0];
-    const changes = { name: 'Changed', brightness: 0, version: device.version };
-    assert.equal(
-      (
-        await admin.request(`/api/devices/${device.id}`, {
-          method: 'PATCH',
-          data: changes,
-          csrf: false,
-        })
-      ).response.status,
-      403,
-    );
-    const saved = await admin.request(`/api/devices/${device.id}`, {
-      method: 'PATCH',
-      data: changes,
-    });
-    assert.equal(saved.response.status, 200);
-    assert.equal(saved.body.data.brightness, 0);
-    const filtered = await admin.request('/api/devices?brightness=0&pageSize=100');
-    assert.equal(filtered.response.status, 200);
-    assert.ok(filtered.body.data.list.some((item) => item.id === device.id));
-    assert.ok(filtered.body.data.list.every((item) => item.brightness === 0));
-    assert.equal((await admin.request('/api/devices?id=does-not-exist')).body.data.total, 0);
-    assert.equal(
-      (await admin.request(`/api/devices/${device.id}`, { method: 'PATCH', data: changes }))
-        .response.status,
-      409,
-    );
-    assert.equal((await admin.request('/api/devices?page=-1')).response.status, 400);
+    const users = await admin.request('/api/system/users?page=1&pageSize=2');
+    assert.equal(users.response.status, 200);
+    assert.equal(users.body.data.list.length, 2);
+    assert.equal(users.body.data.total, 3);
     await admin.request('/api/auth/logout', { method: 'POST' });
     assert.equal((await admin.request('/api/auth/session')).response.status, 401);
-    assert.equal((await admin.request('/api/devices')).response.status, 401);
+    assert.equal((await admin.request('/api/system/users')).response.status, 401);
   } finally {
     server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));

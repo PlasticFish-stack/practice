@@ -9,7 +9,7 @@ import type {
   SystemCatalog,
   SystemQuery,
 } from '@/types/system';
-import type { Pagination } from '@/types/device';
+import type { Pagination } from '@/types/pagination';
 
 const base = '/api/system/';
 export const systemApi = {

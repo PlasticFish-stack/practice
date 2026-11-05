@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
-import { devices, queryDevices } from './devices.ts';
 import { validateProfile } from '../src/auth/profile.ts';
 import { PERMISSIONS } from '../src/auth/permissions.ts';
 import { createSystem, SystemError } from './system.ts';
@@ -223,69 +222,6 @@ export function createMockApi() {
         if (error instanceof SystemError) return send(res, error.status, null, error.message);
         throw error;
       }
-    }
-    if (url.pathname === '/api/devices' && method === 'GET') {
-      if (!user.permissions.includes(PERMISSIONS.deviceRead))
-        return send(res, 403, null, '没有设备查看权限');
-      const query = Object.fromEntries(url.searchParams);
-      const page = Number(query.page ?? 1),
-        pageSize = Number(query.pageSize ?? 20);
-      if (
-        !Number.isInteger(page) ||
-        page < 1 ||
-        !Number.isInteger(pageSize) ||
-        pageSize < 1 ||
-        pageSize > 400
-      ) {
-        return send(res, 400, null, '分页参数错误');
-      }
-      return send(res, 200, queryDevices(query));
-    }
-    const match = /^\/api\/devices\/([^/]+)$/.exec(url.pathname);
-    if (match && method === 'PATCH') {
-      if (
-        ![PERMISSIONS.deviceRead, PERMISSIONS.deviceUpdate].every((p) =>
-          user.permissions.includes(p),
-        )
-      ) {
-        return send(res, 403, null, '没有设备编辑权限');
-      }
-      const device = devices.find((item) => item.id === match[1]);
-      if (!device) return send(res, 404, null, '设备不存在');
-      let changes;
-      try {
-        changes = await body(req);
-      } catch {
-        return send(res, 400, null, '请求体格式错误');
-      }
-      const current = system.session(user.id);
-      if (!current) return send(res, 401, null, '登录已过期，请重新登录');
-      if (
-        ![PERMISSIONS.deviceRead, PERMISSIONS.deviceUpdate].every((code) =>
-          current.permissions.includes(code),
-        )
-      )
-        return send(res, 403, null, '没有设备编辑权限');
-      if (
-        !Object.keys(changes).every((key) => ['name', 'brightness', 'version'].includes(key)) ||
-        (changes.name !== undefined &&
-          (typeof changes.name !== 'string' ||
-            !changes.name.trim() ||
-            changes.name.length > 100)) ||
-        (changes.brightness !== undefined &&
-          (typeof changes.brightness !== 'number' ||
-            changes.brightness < 0 ||
-            changes.brightness > 100))
-      ) {
-        return send(res, 400, null, '设备参数错误');
-      }
-      if (changes.version !== device.version)
-        return send(res, 409, null, '设备已被修改，请刷新后重试');
-      if (typeof changes.name === 'string') device.name = changes.name.trim();
-      if (typeof changes.brightness === 'number') device.brightness = changes.brightness;
-      device.version++;
-      device.updatedAt = new Date().toISOString();
-      return send(res, 200, { ...device });
     }
     return send(res, 404, null, '接口不存在');
   };

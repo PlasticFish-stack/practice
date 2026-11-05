@@ -11,7 +11,7 @@ test('auto virtualization honors threshold, pagination, fallback and keeps selec
       response,
       body:
         (await response.text()) +
-        `\nroutes.find(r => r.name === 'layout').children.push({ path: 'virtual-fixture', name: 'virtual-fixture', component: () => import('/tests/fixtures/VirtualTableHarness.vue'), meta: { title: '虚拟表格测试', permissions: ['devices:read'] } });`,
+        `\nroutes.find(r => r.name === 'layout').children.push({ path: 'virtual-fixture', name: 'virtual-fixture', component: () => import('/tests/fixtures/VirtualTableHarness.vue'), meta: { title: '虚拟表格测试', permissions: ['system:users:read'] } });`,
     });
   });
   await page.goto('/virtual-fixture');
@@ -85,7 +85,7 @@ async function virtualFixture(page: Page) {
       response,
       body:
         (await response.text()) +
-        `\nroutes.find(r => r.name === 'layout').children.push({ path: 'virtual-fixture', name: 'virtual-fixture', component: () => import('/tests/fixtures/VirtualTableHarness.vue'), meta: { title: '虚拟表格测试', permissions: ['devices:read'] } });`,
+        `\nroutes.find(r => r.name === 'layout').children.push({ path: 'virtual-fixture', name: 'virtual-fixture', component: () => import('/tests/fixtures/VirtualTableHarness.vue'), meta: { title: '虚拟表格测试', permissions: ['system:users:read'] } });`,
     });
   });
   await page.goto('/virtual-fixture');

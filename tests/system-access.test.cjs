@@ -12,13 +12,13 @@ test('menu settings change presentation while page permissions remain enforced o
   const { accessibleMenus, canAccessRoute } = load('src/router/access.ts');
   const { parseSessionUser } = load('src/auth/permissions.ts');
   const setting = {
-    routeName: 'devices',
-    title: '设备总览',
-    path: '/device',
+    routeName: 'system-users',
+    title: '用户总览',
+    path: '/system/users',
     icon: 'Monitor',
     visible: true,
     order: 80,
-    permissions: ['devices:read'],
+    permissions: ['system:users:read'],
     version: 1,
     protected: false,
   };
@@ -27,7 +27,7 @@ test('menu settings change presentation while page permissions remain enforced o
     username: 'user',
     displayName: 'user',
     roles: ['admin'],
-    permissions: ['devices:read'],
+    permissions: ['system:users:read'],
     navigation: [setting],
   });
   const auth = {
@@ -38,20 +38,21 @@ test('menu settings change presentation while page permissions remain enforced o
       ),
   };
   assert.equal(
-    accessibleMenus(router, auth).find((item) => item.index === 'devices').title,
-    '设备总览',
+    accessibleMenus(router, auth)[0].children.find((item) => item.index === 'system-users').title,
+    '用户总览',
   );
-  assert.equal(accessibleMenus(router, auth).at(-1).index, 'devices');
+  assert.equal(accessibleMenus(router, auth)[0].children.at(-1).index, 'system-users');
   setting.visible = false;
   assert.equal(
-    accessibleMenus(router, auth).some((item) => item.index === 'devices'),
+    accessibleMenus(router, auth)[0].children.some((item) => item.index === 'system-users'),
     false,
   );
-  assert.equal(canAccessRoute(router.resolve('/device'), auth), true);
-  setting.permissions.push('playground:read');
-  assert.equal(canAccessRoute(router.resolve('/device'), auth), false);
+  assert.equal(canAccessRoute(router.resolve('/system/users'), auth), true);
+  setting.permissions.push('system:roles:read');
+  assert.equal(canAccessRoute(router.resolve('/system/users'), auth), false);
   assert.throws(
-    () => parseSessionUser({ ...user, navigation: [{ ...setting, permissions: 'devices:read' }] }),
+    () =>
+      parseSessionUser({ ...user, navigation: [{ ...setting, permissions: 'system:users:read' }] }),
     /无效的菜单配置/,
   );
 });

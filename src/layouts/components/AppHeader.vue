@@ -9,8 +9,6 @@ import { usePreferencesStore } from '@/stores/preferences';
 import { useThemeTransition } from '@/composables/useThemeTransition';
 import AppAccountMenu from './AppAccountMenu.vue';
 import AppNavigationSearch from './AppNavigationSearch.vue';
-import brandLogo from '@/assets/whalestack.svg';
-import brandLogoDark from '@/assets/whalestack-dark.svg';
 
 const props = defineProps<{ collapsed: boolean }>();
 const emit = defineEmits<{ toggleSidebar: [] }>();
@@ -42,18 +40,6 @@ async function fullscreen() {
 <template>
   <header class="app-header">
     <div class="header-brand">
-      <div
-        class="header-logo"
-        title="鲸栈"
-      >
-        <img
-          :src="preferences.dark ? brandLogoDark : brandLogo"
-          alt="鲸栈"
-          width="32"
-          height="32"
-          draggable="false"
-        />
-      </div>
       <button
         v-if="mobile"
         class="header-action collapse-action"
@@ -158,10 +144,10 @@ async function fullscreen() {
       class="header-dialog"
     >
       <div class="help-content">
-        <h3>欢迎使用设备工作空间</h3>
+        <h3>欢迎使用后台管理</h3>
         <p>通过侧栏浏览你有权访问的页面，使用右上角搜索或 Ctrl / ⌘ + K 快速跳转。</p>
         <ul>
-          <li>设备列表支持查询、分页和设备编辑。</li>
+          <li>系统管理支持用户、角色和菜单配置。</li>
           <li>头像菜单中可以查看账户信息和更新个人资料。</li>
           <li>支持浅色、深色和跟随系统三种主题。</li>
           <li>如需新增访问权限，请联系管理员。</li>
@@ -198,19 +184,6 @@ async function fullscreen() {
   min-width: 0;
   flex: 1;
   height: 100%;
-}
-.header-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 100%;
-  flex-shrink: 0;
-}
-.header-logo img {
-  display: block;
-  width: 32px;
-  height: 32px;
 }
 .header-page-title {
   font-size: 17px;

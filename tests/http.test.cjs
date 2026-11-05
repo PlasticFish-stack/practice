@@ -144,17 +144,6 @@ test('malformed envelope rejects rather than returning silent undefined', async 
   await assert.rejects(api.get('/items'), /接口响应格式错误/);
 });
 
-test('device Mock matches the response envelope and pagination contract', async () => {
-  const { queryDevices } = load('mock/devices.ts');
-  const { api } = setup(async (config) =>
-    response(config, { code: 200, message: 'ok', data: queryDevices(config.params) }),
-  );
-  const { data } = await api.get('/api/devices', { page: 2, pageSize: 10 });
-  assert.equal(data.list.length, 10);
-  assert.equal(data.page, 2);
-  assert.equal(data.total, 60);
-});
-
 test('default client uses cookie/CSRF settings and never reads a legacy token implicitly', async () => {
   let request;
   const module = load('src/net/axios/index.ts');

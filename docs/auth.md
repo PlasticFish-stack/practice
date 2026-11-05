@@ -11,8 +11,8 @@ pnpm mock
 | 用户名 | 密码        | 可用权限               |
 | ------ | ----------- | ---------------------- |
 | admin  | Demo@123456 | 全部业务及系统管理权限 |
-| viewer | Demo@123456 | 设备查看               |
-| tester | Demo@123456 | 开发演示               |
+| viewer | Demo@123456 | 自己的个人中心         |
+| tester | Demo@123456 | 自己的个人中心         |
 
 这些账号只存在于 Node 开发中间件。普通 `pnpm dev` 和生产构建不会开启 Mock；生产包也不包含上述演示密码。
 
@@ -23,20 +23,18 @@ pnpm mock
 - `router/access.ts`：默认登录保护、逐层路由授权、安全回跳和按权限选择首页。
 - `router/routes.ts`：页面权限要求；只有显式 `public: true` 的路由允许匿名访问。
 - `AppMenu.vue`：仅显示有权访问的路由；隐藏菜单不代替路由和后端授权。
-- `DeviceList.vue` / `DeviceEditDialog.vue`：设备查看、编辑入口、保存权限校验。
 - `net/axios`：Cookie/CSRF 配置、统一 401 通知，保留原始 Axios 错误。
 - `mock/server.ts`：本地 HTTP 会话、CSRF 和接口授权示例，开发进程退出后数据和会话丢失。
-- `mock/devices.ts`：设备模拟数据、查询和分页，统一由模拟服务调用。
 
-角色由后端映射成权限码。前端不判断角色名字，不给 admin 名称或通配符特殊待遇。权限目录见 `auth/permissions.ts`，包含设备、开发演示，以及用户、角色、菜单的查看和管理权限；数组要求全部满足。
+角色由后端映射成权限码。前端不判断角色名字，不给 admin 名称或通配符特殊待遇。权限目录见 `auth/permissions.ts`，包含用户、角色、菜单的查看和管理权限；数组要求全部满足。
 
 ```ts
 const auth = useAuthStore();
-auth.can(PERMISSIONS.deviceUpdate);
+auth.can(PERMISSIONS.userWrite);
 ```
 
 ```vue
-<el-button v-if="auth.can(PERMISSIONS.deviceUpdate)">编辑</el-button>
+<el-button v-if="auth.can(PERMISSIONS.userWrite)">编辑</el-button>
 ```
 
 当前使用响应式 v-if 控制操作，未添加一次性移除 DOM 的权限指令，避免权限变化后页面不同步。
@@ -65,7 +63,7 @@ Cache-Control: no-store
     "username": "alice",
     "displayName": "Alice",
     "roles": ["viewer"],
-    "permissions": ["devices:read"]
+    "permissions": ["system:users:read"]
   }
 }
 ```
@@ -77,8 +75,6 @@ Cache-Control: no-store
 | GET /api/auth/session   | 验证当前会话，返回用户和最新权限；无有效会话返回 HTTP 401；保证有效的 CSRF Cookie 可用          |
 | PATCH /api/auth/profile | 校验会话、CSRF 和资料字段白名单，只修改当前用户资料；返回完整用户，禁止修改角色/权限/ID         |
 | POST /api/auth/logout   | 检查 CSRF，撤销服务端会话并清除 Cookie；返回 data: null，重复退出可返回 200 或 401              |
-| GET /api/devices        | 每次校验会话与 devices:read，返回分页数据                                                       |
-| PATCH /api/devices/:id  | 校验会话、CSRF、devices:read 和 devices:update、对象归属、字段白名单；原子检查 version 后更新   |
 
 HTTP 错误也返回同样信封，code 对应 HTTP 状态。401 表示未认证，403 表示认证后没有权限，409 表示版本冲突。不要把错误当成成功响应。
 
@@ -94,7 +90,6 @@ HTTP 错误也返回同样信封，code 对应 HTTP 状态。401 表示未认证
 - 网络故障不冒充会话过期；进入可重试的会话错误页。
 - 旧会话的迟到响应不能恢复已退出用户，迟到 401 不会清除新会话。
 - 退出请求网络失败会明确报错并保留当前状态，不声称已经撤销服务端会话。
-- 设备编辑通过接口保存，支持亮度 0；版本冲突明确提示刷新。
 - Cookie 会话不让前端获知到期时间；最终过期与撤销判断以服务端为准。
 
 ## 生产后端仍需实现
@@ -111,7 +106,7 @@ pnpm test:e2e
 pnpm build
 ```
 
-E2E 默认使用已安装的 Edge。其他环境安装 Playwright Chromium，并设置 PLAYWRIGHT_CHANNEL=chromium 后运行。测试包括真实浏览器 Cookie/CSRF、刷新恢复、三种账号、无权直达、设备保存、会话过期和跨标签退出。本地 HTTP 测试还验证绕过 UI 直接请求会被拒绝。
+E2E 默认使用已安装的 Edge。其他环境安装 Playwright Chromium，并设置 PLAYWRIGHT_CHANNEL=chromium 后运行。测试包括真实浏览器 Cookie/CSRF、刷新恢复、三种账号、无权直达、用户与角色保存、会话过期和跨标签退出。本地 HTTP 测试还验证绕过 UI 直接请求会被拒绝。
 
 参考：[OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)、[OWASP Authorization](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)、[Pinia 在组件外使用 Store](https://pinia.vuejs.org/core-concepts/outside-component-usage.html)。
 

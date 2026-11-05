@@ -67,16 +67,16 @@ test('admin creates a role and user; changes revoke permissions and disabling re
   baseURL,
 }) => {
   const code = 'e2e_operator';
-  const name = '设备维护测试员';
+  const name = '账户维护测试员';
   await login(page, 'admin', '/system/roles');
   await page.getByRole('button', { name: '新增角色', exact: true }).click();
   let dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('button', { name: '保存', exact: true })).toBeInViewport();
   await dialog.getByRole('textbox', { name: '角色名称', exact: true }).fill(name);
   await dialog.getByRole('textbox', { name: '角色编码', exact: true }).fill(code);
-  await dialog.getByText('编辑设备', { exact: true }).click();
+  await dialog.getByText('管理用户', { exact: true }).click();
   await dialog.getByText('管理角色及权限', { exact: true }).click();
-  await expect(dialog.getByRole('checkbox', { name: '查看设备', exact: true })).toBeChecked();
+  await expect(dialog.getByRole('checkbox', { name: '查看用户', exact: true })).toBeChecked();
   await dialog.getByRole('button', { name: '保存', exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(rowWith(page, name)).toBeVisible();
@@ -97,15 +97,15 @@ test('admin creates a role and user; changes revoke permissions and disabling re
   const memberContext = await browser.newContext({ baseURL });
   try {
     const member = await memberContext.newPage();
-    await login(member, code, '/device', 'Password12345');
-    await expect(member.getByRole('button', { name: '编辑', exact: true })).toHaveCount(10);
+    await login(member, code, '/system/users', 'Password12345');
+    await expect(member.getByRole('button', { name: '编辑', exact: true })).not.toHaveCount(0);
     await expect(
-      member.locator('.app-menu').getByRole('menuitem', { name: '用户管理' }),
+      member.locator('.app-menu').getByRole('menuitem', { name: '菜单管理' }),
     ).toHaveCount(0);
     await page.goto('/system/roles');
     await rowWith(page, name).getByRole('button', { name: '编辑', exact: true }).click();
     dialog = page.getByRole('dialog');
-    await dialog.getByText('编辑设备', { exact: true }).click();
+    await dialog.getByText('管理用户', { exact: true }).click();
     await dialog.getByRole('button', { name: '保存', exact: true }).click();
     await expect(dialog).toBeHidden();
     await member.evaluate(() => window.dispatchEvent(new Event('focus')));
@@ -152,8 +152,8 @@ test('menu edits update navigation, preserve direct access, and the editor works
   page,
 }) => {
   await login(page, 'admin', '/system/menus');
-  await page.locator('.app-menu').getByRole('menuitem', { name: '设备列表', exact: true }).click();
-  await expect(page.getByRole('tab', { name: '设备列表', exact: true })).toHaveAttribute(
+  await page.locator('.app-menu').getByRole('menuitem', { name: '用户管理', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '用户管理', exact: true })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -162,42 +162,42 @@ test('menu edits update navigation, preserve direct access, and the editor works
     'aria-selected',
     'true',
   );
-  await rowWith(page, '/device').getByRole('button', { name: '编辑', exact: true }).click();
+  await rowWith(page, '/system/users').getByRole('button', { name: '编辑', exact: true }).click();
   let dialog = page.getByRole('dialog');
-  await dialog.getByRole('textbox', { name: '菜单名称', exact: true }).fill('设备总览');
+  await dialog.getByRole('textbox', { name: '菜单名称', exact: true }).fill('用户总览');
   await dialog.getByRole('switch', { name: '显示菜单', exact: true }).locator('..').click();
   await dialog.getByRole('button', { name: '保存', exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(
-    page.locator('.app-menu').getByRole('menuitem', { name: '设备列表', exact: true }),
+    page.locator('.app-menu').getByRole('menuitem', { name: '用户管理', exact: true }),
   ).toHaveCount(0);
-  await page.getByRole('tab', { name: '设备总览', exact: true }).click();
-  await expect(page).toHaveURL('/device');
-  await expect(page.getByRole('tab', { name: '设备总览', exact: true })).toHaveAttribute(
+  await page.getByRole('tab', { name: '用户总览', exact: true }).click();
+  await expect(page).toHaveURL('/system/users');
+  await expect(page.getByRole('tab', { name: '用户总览', exact: true })).toHaveAttribute(
     'aria-selected',
     'true',
   );
   await expect(
-    page.getByRole('navigation', { name: 'Breadcrumb' }).getByText('设备总览', { exact: true }),
+    page.getByRole('navigation', { name: 'Breadcrumb' }).getByText('用户总览', { exact: true }),
   ).toBeVisible();
-  await expect(page.locator('.el-table__body-wrapper tbody tr')).toHaveCount(10);
+  await expect(page.locator('.el-table__body-wrapper tbody tr')).toHaveCount(3);
   await page.getByRole('tab', { name: '菜单管理', exact: true }).click();
   await page.getByRole('button', { name: '切换主题', exact: true }).click();
   await page.getByRole('menuitem', { name: '深色模式', exact: true }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await page.setViewportSize({ width: 390, height: 844 });
-  await rowWith(page, '/device').getByRole('button', { name: '编辑', exact: true }).click();
+  await rowWith(page, '/system/users').getByRole('button', { name: '编辑', exact: true }).click();
   dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', { name: '保存', exact: true })).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await dialog.getByRole('textbox', { name: '菜单名称', exact: true }).fill('设备列表');
+  await dialog.getByRole('textbox', { name: '菜单名称', exact: true }).fill('用户管理');
   await dialog.getByRole('switch', { name: '显示菜单', exact: true }).locator('..').click();
   await dialog.getByRole('button', { name: '保存', exact: true }).click();
   await expect(dialog).toBeHidden();
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('button', { name: '展开侧栏', exact: true }).first().click();
   await expect(
-    page.locator('.app-menu').getByRole('menuitem', { name: '设备列表', exact: true }),
+    page.locator('.app-menu').getByRole('menuitem', { name: '用户管理', exact: true }),
   ).toBeVisible();
 });

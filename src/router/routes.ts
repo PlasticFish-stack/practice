@@ -93,68 +93,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: '没有访问权限', tab: false, keepAlive: false },
       },
       {
-        path: 'device',
-        name: 'devices',
-        component: () => import('@/views/devices/DeviceList.vue'),
-        meta: {
-          title: '设备列表',
-          menu: true,
-          menuOrder: 10,
-          icon: 'Monitor',
-          permissions: [PERMISSIONS.deviceRead],
-        },
-      },
-      {
-        path: 'playground',
-        name: 'playground',
-        redirect: { name: 'charts-demo' },
-        meta: {
-          title: '开发演示',
-          menu: true,
-          menuOrder: 90,
-          icon: 'FolderOpened',
-          permissions: [PERMISSIONS.playgroundRead],
-        },
-        children: [
-          {
-            path: 'websocket',
-            name: 'websocket-demo',
-            component: () => import('@/views/playground/WebSocketDemo.vue'),
-            meta: {
-              title: 'WebSocket 演示',
-              menu: true,
-              menuOrder: 20,
-              icon: 'Connection',
-              permissions: [PERMISSIONS.playgroundRead],
-            },
-          },
-          {
-            path: 'charts',
-            name: 'charts-demo',
-            component: () => import('@/views/playground/ChartsDemo.vue'),
-            meta: {
-              title: '图表演示',
-              menu: true,
-              menuOrder: 10,
-              icon: 'DataAnalysis',
-              permissions: [PERMISSIONS.playgroundRead],
-            },
-          },
-          {
-            path: 'terminal',
-            name: 'terminal-demo',
-            component: () => import('@/views/playground/TerminalDemo.vue'),
-            meta: {
-              title: '终端演示',
-              menu: true,
-              menuOrder: 30,
-              icon: 'Monitor',
-              permissions: [PERMISSIONS.playgroundRead],
-            },
-          },
-        ],
-      },
-      {
         path: ':pathMatch(.*)*',
         name: 'not-found',
         component: () => import('@/views/errors/NotFound.vue'),

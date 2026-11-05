@@ -62,61 +62,6 @@ test('column dragging keeps one move target across row controls and rejects lock
   await expect(panel.locator('.is-drop-target')).toHaveCount(0);
 });
 
-test('menu column settings persist visibility, drag order and width and preserve utility columns', async ({
-  page,
-}) => {
-  await login(page);
-  const table = page.locator('.app-table'),
-    headers = table.locator('.el-table__header-wrapper th');
-  const parent = table
-    .locator('tbody tr')
-    .filter({ has: page.locator('.menu-title', { hasText: '开发演示' }) });
-  await parent.locator('.el-table__expand-icon').click();
-  await expect(table.locator('tbody tr').filter({ hasText: 'WebSocket 演示' })).toBeHidden();
-  await page.getByRole('button', { name: '列设置', exact: true }).click();
-  const panel = page.getByRole('region', { name: '表格列设置' });
-  await panel
-    .getByRole('button', { name: '拖动排序：排序', exact: true })
-    .dragTo(panel.locator('[data-column-id="title"]'));
-  await panel.getByText('页面地址', { exact: true }).click();
-  await panel.getByRole('spinbutton', { name: '列宽：排序', exact: true }).fill('140');
-  await panel.getByRole('spinbutton', { name: '列宽：排序', exact: true }).press('Enter');
-  await table.getByRole('heading', { name: '菜单列表', exact: true }).click();
-  await expect(headers.nth(2)).toHaveText('排序');
-  await expect(table.locator('tbody tr').filter({ hasText: 'WebSocket 演示' })).toBeHidden();
-  await expect(headers.filter({ hasText: '页面地址' })).toHaveCount(0);
-  await expect(headers.nth(0).locator('.el-checkbox')).toBeVisible();
-  await expect(
-    table
-      .locator('tbody tr')
-      .filter({ has: page.locator('.menu-title', { hasText: '开发演示' }) })
-      .locator('td')
-      .nth(1)
-      .locator('.el-table__expand-icon'),
-  ).toBeVisible();
-  expect(Math.round((await headers.nth(2).boundingBox())!.width)).toBe(140);
-  await page.reload();
-  await expect(headers.nth(2)).toHaveText('排序');
-  await expect(headers.filter({ hasText: '页面地址' })).toHaveCount(0);
-  expect(Math.round((await headers.nth(2).boundingBox())!.width)).toBe(140);
-  // Other tables use independent keys, even in the same browser.
-  await page.goto('/device');
-  await expect(page.locator('.el-table__header-wrapper th').first()).toHaveText('ID');
-  await page.goto('/system/menus');
-  await expect(headers.nth(2)).toHaveText('排序');
-  await page.getByRole('button', { name: '列设置', exact: true }).click();
-  await panel.getByRole('button', { name: '恢复默认', exact: true }).click();
-  await table.getByRole('heading', { name: '菜单列表', exact: true }).click();
-  await expect(headers.nth(2)).toHaveText('菜单名称');
-  await expect(headers.filter({ hasText: '页面地址' })).toHaveCount(1);
-  expect(
-    await page.evaluate(() => localStorage.getItem('app-table:columns:v1:system.menus')),
-  ).toBeNull();
-  await page.getByRole('button', { name: '列设置', exact: true }).click();
-  await expect(page.locator('.table-column-settings-popper:visible')).toHaveCSS('opacity', '1');
-  await page.screenshot({ path: 'artifacts/table-column-settings.png', fullPage: true });
-});
-
 test('native header resize persists without enabling table borders', async ({ page }) => {
   await login(page);
   const handle = page.getByRole('button', { name: '调整列宽：排序', exact: true });
@@ -145,7 +90,7 @@ test('virtual settings survive renderer switches, lock last column and honor sou
       response,
       body:
         (await response.text()) +
-        `\nroutes.find(r => r.name === 'layout').children.push({ path: 'virtual-fixture', name: 'virtual-fixture', component: () => import('/tests/fixtures/VirtualTableHarness.vue'), meta: { title: '虚拟表格测试', permissions: ['devices:read'] } });`,
+        `\nroutes.find(r => r.name === 'layout').children.push({ path: 'virtual-fixture', name: 'virtual-fixture', component: () => import('/tests/fixtures/VirtualTableHarness.vue'), meta: { title: '虚拟表格测试', permissions: ['system:users:read'] } });`,
     });
   });
   await login(page, '/virtual-fixture');

@@ -59,7 +59,7 @@ test('RBAC administration enforces authorization, concurrency, live revocation a
     const role = await admin.request(
       base + 'roles',
       'POST',
-      roleDraft('device_editor', ['devices:read', 'devices:update']),
+      roleDraft('user_editor', ['system:users:read', 'system:users:write']),
     );
     assert.equal(role.status, 200);
     const created = await admin.request(
@@ -76,7 +76,7 @@ test('RBAC administration enforces authorization, concurrency, live revocation a
       (
         await admin.request(base + 'users', 'POST', {
           ...userDraft('invalid_user', []),
-          permissions: ['devices:update'],
+          permissions: ['system:users:write'],
         })
       ).status,
       400,
@@ -91,21 +91,21 @@ test('RBAC administration enforces authorization, concurrency, live revocation a
     );
     const member = server.client();
     assert.equal((await member.login('new_operator', 'Password12345')).status, 200);
-    assert.equal((await member.request('/api/devices')).status, 200);
-    const device = (await member.request('/api/devices')).data.list[0];
+    assert.equal((await member.request('/api/system/users')).status, 200);
+    const device = (await member.request('/api/system/users')).data.list[0];
 
     const reduced = await admin.request(
       base + 'roles/' + role.data.id,
       'PATCH',
-      editRole(role.data, { permissions: ['devices:read'] }),
+      editRole(role.data, { permissions: ['system:users:read'] }),
     );
     assert.equal(reduced.status, 200);
     assert.deepEqual((await member.request('/api/auth/session')).data.permissions, [
-      'devices:read',
+      'system:users:read',
     ]);
     assert.equal(
       (
-        await member.request('/api/devices/' + device.id, 'PATCH', {
+        await member.request('/api/system/users/' + device.id, 'PATCH', {
           name: '不可修改',
           version: device.version,
         })
@@ -122,7 +122,7 @@ test('RBAC administration enforces authorization, concurrency, live revocation a
       editRole(reduced.data, { enabled: false }),
     );
     assert.equal(disabledRole.status, 200);
-    assert.equal((await member.request('/api/devices')).status, 403);
+    assert.equal((await member.request('/api/system/users')).status, 403);
     assert.equal(
       (
         await admin.request(
@@ -198,7 +198,6 @@ test('delegated managers cannot escalate privileges; menu registry preserves pag
       'system:roles:read',
       'system:roles:write',
       'system:menus:read',
-      'system:menus:write',
     ];
     const delegatedRole = (
       await admin.request(base + 'roles', 'POST', roleDraft('delegated', managedPermissions))
@@ -207,8 +206,13 @@ test('delegated managers cannot escalate privileges; menu registry preserves pag
     const delegated = server.client();
     await delegated.login('delegated_user', 'Password12345');
     assert.equal(
-      (await delegated.request(base + 'roles', 'POST', roleDraft('escalated', ['devices:read'])))
-        .status,
+      (
+        await delegated.request(
+          base + 'roles',
+          'POST',
+          roleDraft('escalated', ['system:menus:read', 'system:menus:write']),
+        )
+      ).status,
       403,
     );
     assert.equal(
@@ -234,45 +238,53 @@ test('delegated managers cannot escalate privileges; menu registry preserves pag
         await admin.request(
           base + 'roles',
           'POST',
-          roleDraft('invalid_dependency', ['devices:update']),
+          roleDraft('invalid_dependency', ['system:users:write']),
         )
       ).status,
       400,
     );
 
     const menus = (await admin.request(base + 'menus')).data;
-    const devices = menus.find((item) => item.routeName === 'devices');
+    const userMenu = menus.find((item) => item.routeName === 'system-users');
     assert.equal(
-      (await admin.request(base + 'menus/devices', 'PATCH', editMenu(devices, { permissions: [] })))
-        .status,
+      (
+        await admin.request(
+          base + 'menus/system-users',
+          'PATCH',
+          editMenu(userMenu, { permissions: [] }),
+        )
+      ).status,
       400,
     );
     assert.equal(
       (
-        await admin.request(base + 'menus/devices', 'PATCH', {
-          ...editMenu(devices),
+        await admin.request(base + 'menus/system-users', 'PATCH', {
+          ...editMenu(userMenu),
           component: 'https://evil.test/code.js',
         })
       ).status,
       400,
     );
     const hidden = await admin.request(
-      base + 'menus/devices',
+      base + 'menus/system-users',
       'PATCH',
-      editMenu(devices, { title: '设备总览', visible: false }),
+      editMenu(userMenu, { title: '用户总览', visible: false }),
     );
     assert.equal(hidden.status, 200);
     assert.equal(
-      (await admin.request(base + 'menus/devices', 'PATCH', editMenu(devices))).status,
+      (await admin.request(base + 'menus/system-users', 'PATCH', editMenu(userMenu))).status,
       409,
     );
     assert.equal(
-      (await admin.request(base + 'menus/non-existent', 'PATCH', editMenu(devices))).status,
+      (await admin.request(base + 'menus/non-existent', 'PATCH', editMenu(userMenu))).status,
       404,
     );
     const session = (await admin.request('/api/auth/session')).data;
-    assert.equal(session.navigation.find((item) => item.routeName === 'devices').visible, false);
-    assert.equal((await admin.request('/api/devices')).status, 200);
+    assert.equal(
+      session.navigation.find((item) => item.routeName === 'system-users').visible,
+      false,
+    );
+    assert.equal((await admin.request('/api/system/users')).status, 200);
     for (const name of ['system', 'system-menus', 'account-center']) {
       const menu = menus.find((item) => item.routeName === name);
       assert.equal(

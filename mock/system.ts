@@ -33,20 +33,20 @@ export function createSystem() {
     {
       id: 'viewer',
       code: 'viewer',
-      name: '设备观察员',
-      description: '只读查看设备',
+      name: '基础访客',
+      description: '仅可访问个人中心',
       enabled: true,
-      permissions: [PERMISSIONS.deviceRead],
+      permissions: [],
       protected: false,
       version: 1,
     },
     {
       id: 'tester',
       code: 'tester',
-      name: '演示测试员',
-      description: '访问开发演示',
+      name: '普通用户',
+      description: '仅可访问个人中心',
       enabled: true,
-      permissions: [PERMISSIONS.playgroundRead],
+      permissions: [],
       protected: false,
       version: 1,
     },
@@ -59,7 +59,7 @@ export function createSystem() {
   const users: StoredUser[] = [
     ['admin', '管理员', 'admin'],
     ['viewer', '只读用户', 'viewer'],
-    ['tester', '演示用户', 'tester'],
+    ['tester', '普通用户', 'tester'],
   ].map(([id, displayName, role]) => {
     const salt = randomBytes(16).toString('hex');
     return {
@@ -76,7 +76,7 @@ export function createSystem() {
         avatarUrl: '',
         phone: '',
         title: roles.find((item) => item.id === role)!.name,
-        department: id === 'admin' ? '设备运营' : '运行监控',
+        department: id === 'admin' ? '系统管理' : '日常办公',
         bio: '',
       },
     };
