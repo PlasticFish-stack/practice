@@ -2,8 +2,8 @@
 
 个人中心归入系统管理分组，保留 `/account/center` 和旧设置 URL；所有已登录用户仍可访问自己的资料，其他管理页面按各自权限显示。系统管理分组包含：
 
-| 页面 | 路径 | 查看权限 | 修改权限 |
-| --- | --- | --- | --- |
+| 页面     | 路径            | 查看权限            | 修改权限             |
+| -------- | --------------- | ------------------- | -------------------- |
 | 用户管理 | `/system/users` | `system:users:read` | `system:users:write` |
 | 角色管理 | `/system/roles` | `system:roles:read` | `system:roles:write` |
 | 菜单管理 | `/system/menus` | `system:menus:read` | `system:menus:write` |

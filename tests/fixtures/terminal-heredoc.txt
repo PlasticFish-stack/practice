@@ -1,0 +1,15 @@
+cat > /tmp/terminal-paste-test.txt <<'EOF'
+这是第一行：中文测试。
+This is the second line: English text.
+第三行包含空格：    缩进四个空格。
+特殊字符：! @ # $ % ^ & * ( ) [ ] { } < > | \
+变量应保持原样：$HOME ${USER} $(whoami) `date`
+引号测试："双引号" '单引号'
+长行：0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+上面有一个空行。
+PASTE-END
+EOF
+
+cat /tmp/terminal-paste-test.txt
+wc -l /tmp/terminal-paste-test.txt

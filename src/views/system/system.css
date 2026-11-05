@@ -1,7 +1,33 @@
-.system-page { min-width: 0; display: grid; gap: var(--app-space-md); }
-.system-search { display: flex; flex-wrap: wrap; align-items: center; gap: var(--app-space-xs); }
-.system-search .el-input { width: min(260px, 100%); }
-.system-search .el-button + .el-button { margin-left: 0; }
-.system-tags { display: flex; flex-wrap: wrap; gap: var(--app-space-2xs); align-items: center; padding-block: 4px; }
-.system-empty { color: var(--app-color-text-tertiary); }
-.system-notice { margin: 0; font-size: 13px; line-height: 1.7; color: var(--app-color-text-secondary); }
+.system-page {
+  min-width: 0;
+  display: grid;
+  gap: var(--app-space-md);
+}
+.system-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--app-space-xs);
+}
+.system-search .el-input {
+  width: min(260px, 100%);
+}
+.system-search .el-button + .el-button {
+  margin-left: 0;
+}
+.system-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2xs);
+  align-items: center;
+  padding-block: 4px;
+}
+.system-empty {
+  color: var(--app-color-text-tertiary);
+}
+.system-notice {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--app-color-text-secondary);
+}

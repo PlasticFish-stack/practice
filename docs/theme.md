@@ -13,23 +13,23 @@
 
 ## 主要变量
 
-| 用途 | 变量 | 浅色默认值 |
-| --- | --- | --- |
-| 品牌主色 | `--app-color-primary` | `#1677ff` |
-| 主色 hover / active | `--app-color-primary-hover` / `--app-color-primary-active` | `#4096ff` / `#0958d9` |
-| 主色弱化 / 边框 / 背景 | `--app-color-primary-muted` / `--app-color-primary-border` / `--app-color-primary-bg` | `#91caff` / `#bae0ff` / `#e6f4ff` |
-| 成功 / 警告 / 错误 | `--app-color-success` / `--app-color-warning` / `--app-color-danger` | `#52c41a` / `#faad14` / `#ff4d4f` |
+| 用途                          | 变量                                                                                                          | 浅色默认值                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 品牌主色                      | `--app-color-primary`                                                                                         | `#1677ff`                          |
+| 主色 hover / active           | `--app-color-primary-hover` / `--app-color-primary-active`                                                    | `#4096ff` / `#0958d9`              |
+| 主色弱化 / 边框 / 背景        | `--app-color-primary-muted` / `--app-color-primary-border` / `--app-color-primary-bg`                         | `#91caff` / `#bae0ff` / `#e6f4ff`  |
+| 成功 / 警告 / 错误            | `--app-color-success` / `--app-color-warning` / `--app-color-danger`                                          | `#52c41a` / `#faad14` / `#ff4d4f`  |
 | 正文 / 次要文字 / 提示 / 禁用 | `--app-color-text` / `--app-color-text-secondary` / `--app-color-text-tertiary` / `--app-color-text-disabled` | 黑色透明度 `88% / 65% / 45% / 25%` |
-| 控件边框 / 分隔线 | `--app-color-border` / `--app-color-border-secondary` | `#d9d9d9` / `#f0f0f0` |
-| 页面 / 内容 / 浮层背景 | `--app-color-layout` / `--app-color-surface` / `--app-color-elevated` | `#f5f5f5` / `#fff` / `#fff` |
-| 小 / 默认 / 大圆角 | `--app-radius-sm` / `--app-radius-base` / `--app-radius-lg` | `4px / 6px / 8px` |
-| 轻阴影 / 浮层阴影 / 卡片阴影 | `--app-shadow-sm` / `--app-shadow-popup` / `--app-shadow-card` | 分层阴影，普通业务卡片为 `none` |
-| 间距尺度 | `--app-space-2xs` 至 `--app-space-2xl` | `4 / 8 / 12 / 16 / 24 / 32 / 48px` |
-| 页面 / 卡片 padding | `--app-page-padding` / `--app-card-padding` | `24px`，窄屏 `16px` |
-| 表单字段间距 | `--app-form-gap` | `24px` |
-| 默认输入框左右 padding | `--app-control-padding-inline` | `11px` |
-| 小 / 默认 / 大控件高度 | `--app-control-height-sm` / `--app-control-height` / `--app-control-height-lg` | `24px / 32px / 40px` |
-| 默认表格上下 / 左右 padding | `--app-table-padding-block` / `--app-table-padding-inline` | `12px / 16px` |
+| 控件边框 / 分隔线             | `--app-color-border` / `--app-color-border-secondary`                                                         | `#d9d9d9` / `#f0f0f0`              |
+| 页面 / 内容 / 浮层背景        | `--app-color-layout` / `--app-color-surface` / `--app-color-elevated`                                         | `#f5f5f5` / `#fff` / `#fff`        |
+| 小 / 默认 / 大圆角            | `--app-radius-sm` / `--app-radius-base` / `--app-radius-lg`                                                   | `4px / 6px / 8px`                  |
+| 轻阴影 / 浮层阴影 / 卡片阴影  | `--app-shadow-sm` / `--app-shadow-popup` / `--app-shadow-card`                                                | 分层阴影，普通业务卡片为 `none`    |
+| 间距尺度                      | `--app-space-2xs` 至 `--app-space-2xl`                                                                        | `4 / 8 / 12 / 16 / 24 / 32 / 48px` |
+| 页面 / 卡片 padding           | `--app-page-padding` / `--app-card-padding`                                                                   | `24px`，窄屏 `16px`                |
+| 表单字段间距                  | `--app-form-gap`                                                                                              | `24px`                             |
+| 默认输入框左右 padding        | `--app-control-padding-inline`                                                                                | `11px`                             |
+| 小 / 默认 / 大控件高度        | `--app-control-height-sm` / `--app-control-height` / `--app-control-height-lg`                                | `24px / 32px / 40px`               |
+| 默认表格上下 / 左右 padding   | `--app-table-padding-block` / `--app-table-padding-inline`                                                    | `12px / 16px`                      |
 
 圆角、边框和间距参考官方 Token。表格采用适合后台的中等密度：默认上下 `12px`，`size="large"` 为 `16px`，`size="small"` 为 `8px`；对应 [Ant Design Table 的密度层级](https://ant.design/components/table/#design-token)。卡片 padding 参照 [Card Token](https://ant.design/components/card/#design-token)，输入 padding 参照 [Input Token](https://ant.design/components/input/#design-token)。
 
@@ -69,3 +69,7 @@
 浮层通常传送到 `body`，区域内的覆盖不会自动传给浮层。需要影响浮层时，在主题根节点调整，或给对应浮层指定 class 再覆盖。全局换品牌色时一起调整主色、hover、active、弱化、边框和背景六个值，并检查 `html.dark` 下的对应色组。
 
 深色切换继续由 `stores/preferences.ts` 管理 `html.dark`。组件中不单独判断深色模式；文字、表面、边框和浮层阴影通过变量切换。原生的 `round`、`circle`、禁用、校验错误，以及数字输入框的按钮结构继续由 Element Plus 控制。
+
+从顶部主题菜单切换外观时，`useThemeTransition.ts` 使用原生 View Transition 做整页昼夜渐变：新主题通过透明度平缓覆盖旧主题，不使用圆形裁剪、位移、缩放或模糊。转深色用 420ms，转浅色用 560ms，降低变亮时的突兀感。旧主题快照保持不透明，避免两层同时淡出而透出页面底色；快照期间暂停控件自身的颜色渐变。
+
+鼠标与键盘使用相同效果。系统自动变色、实际外观未改变、浏览器不支持或启用减少动画时直接更新主题；菜单选项和本地保存逻辑保持不变。重复触发或组件销毁时清理旧过渡，避免旧动画恢复过期主题。

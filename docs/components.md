@@ -1,30 +1,45 @@
 # 表单与表格
 
+SSH 风格的终端组件与 WebSocket 网关接口见 [terminal.md](./terminal.md)。
+
+图表基础组件、主题和更新约定见 [charts.md](./charts.md)。
+
 公共组件继续使用 Element Plus，字段配置负责重复结构，复杂内容用 Vue 插槽。请求、权限、服务端字段转换和业务校验留在页面；组件不会自行请求接口或修改表格行。
 
 ## AppForm
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
-import AppForm from '@/components/AppForm/AppForm.vue'
-import type { FormField } from '@/components/AppForm/types'
+import { ref } from 'vue';
+import AppForm from '@/components/AppForm/AppForm.vue';
+import type { FormField } from '@/components/AppForm/types';
 
-type Model = { name: string; brightness: number; enabled: boolean }
-const defaults = (): Model => ({ name: '', brightness: 0, enabled: false })
-const form = ref(defaults())
+type Model = { name: string; brightness: number; enabled: boolean };
+const defaults = (): Model => ({ name: '', brightness: 0, enabled: false });
+const form = ref(defaults());
 const fields: FormField<Model>[] = [
-  { prop: 'name', label: '名称', type: 'input', rules: [
-    { required: true, whitespace: true, message: '请输入名称', trigger: 'blur' },
-  ] },
+  {
+    prop: 'name',
+    label: '名称',
+    type: 'input',
+    rules: [{ required: true, whitespace: true, message: '请输入名称', trigger: 'blur' }],
+  },
   { prop: 'brightness', label: '亮度', type: 'number', props: { min: 0, max: 100 } },
   { prop: 'enabled', label: '启用', type: 'switch' },
-]
-function save(values: Model) { console.log(values) }
+];
+function save(values: Model) {
+  console.log(values);
+}
 </script>
 
 <template>
-  <AppForm v-model="form" :fields="fields" :defaults="defaults" :columns="2" @submit="save" />
+  <AppForm
+    v-model="form"
+    :fields="fields"
+    :defaults="defaults"
+    :columns="2"
+    @submit="save"
+  />
 </template>
 ```
 
@@ -45,7 +60,11 @@ function save(values: Model) { console.log(values) }
 
 ```vue
 <template #field-name="{ model, update, disabled }">
-  <el-input :model-value="model.name" :disabled="disabled" @update:model-value="update" />
+  <el-input
+    :model-value="model.name"
+    :disabled="disabled"
+    @update:model-value="update"
+  />
 </template>
 ```
 
@@ -57,24 +76,40 @@ function save(values: Model) { console.log(values) }
 
 ```vue
 <script setup lang="ts">
-import AppTable from '@/components/AppTable/AppTable.vue'
-import type { ColumnOptions } from '@/components/AppTable/types'
+import AppTable from '@/components/AppTable/AppTable.vue';
+import type { ColumnOptions } from '@/components/AppTable/types';
 
-type Row = { id: number; name: string; status: string }
-const rows: Row[] = [{ id: 1, name: '设备 A', status: 'online' }]
+type Row = { id: number; name: string; status: string };
+const rows: Row[] = [{ id: 1, name: '设备 A', status: 'online' }];
 const columns: ColumnOptions<Row>[] = [
   { type: 'selection', width: 48 },
   { prop: 'name', label: '名称', minWidth: 160, showOverflowTooltip: true },
   { prop: 'status', label: '状态', width: 100 },
   { key: 'actions', label: '操作', width: 100, fixed: 'right' },
-]
-function edit(row: Row) { console.log(row) }
+];
+function edit(row: Row) {
+  console.log(row);
+}
 </script>
 
 <template>
-  <AppTable :rows="rows" :column-options="columns" :table-options="{ rowKey: 'id' }" title="设备列表">
-    <template #cell-status="{ row }"><el-tag>{{ row.status }}</el-tag></template>
-    <template #cell-actions="{ row }"><el-button link @click="edit(row)">编辑</el-button></template>
+  <AppTable
+    :rows="rows"
+    :column-options="columns"
+    :table-options="{ rowKey: 'id' }"
+    title="设备列表"
+  >
+    <template #cell-status="{ row }">
+      <el-tag>{{ row.status }}</el-tag>
+    </template>
+    <template #cell-actions="{ row }">
+      <el-button
+        link
+        @click="edit(row)"
+      >
+        编辑
+      </el-button>
+    </template>
   </AppTable>
 </template>
 ```
@@ -103,6 +138,12 @@ function edit(row: Row) { console.log(row) }
 - ref 提供 `getSelectedCells()` 和 `clearCellSelection()`。数据集、列配置、排序、展开或加载状态变化会清空选区，避免选中旧位置。
 
 当前支持单个矩形范围，不包含多段不连续选区；合并单元格不参与选择。
+
+### 行拖动排序
+
+`rowDraggable` 开启行排序，`dragColumn` 指定手柄列（默认首个普通数据列）。拖动从手柄开始，整行的数据格、空白和固定操作列都接收落点；拖动期间行内控件不参与鼠标命中，结束后恢复交互。
+
+`canDrop(source, target)` 限制可放置的行，例如只允许同级菜单。有效放置触发 `row-reorder`，由页面负责保存；拖回自身、无效落点和按 Escape 取消不会触发保存。加载、数据替换或页面停用时清理拖动状态。
 
 ### 列设置
 

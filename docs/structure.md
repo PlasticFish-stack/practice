@@ -21,23 +21,29 @@
 
 路由配置放在 `router/routes.ts`，实例和导航钩子放在 `router/index.ts`。新增页面时配置唯一 `name` 和 `meta.title`；设定 `meta.menu: true` 后会按路由树生成侧栏，父子权限同时生效，`meta.icon` 对应已注册的图标名称。面包屑读取当前匹配路由的标题。
 
-`/` 根据权限进入首个可访问页面；未匹配地址显示 404；`/login` 不使用后台布局。登录和权限接入说明见 [auth.md](./auth.md)。使用 HTML5 history，部署服务需要将前端页面地址回退到 `index.html`。
+`/` 根据菜单顺序和权限优先进入可访问的功能页，个人中心作为没有其他功能权限时的回退；未匹配地址显示 404；`/login` 不使用后台布局。登录和权限接入说明见 [auth.md](./auth.md)。使用 HTML5 history，部署服务需要将前端页面地址回退到 `index.html`。
 
 WebSocket 新导入方式：
 
 ```ts
-import { useWebSocket } from '@/composables/useWebSocket'
+import { useWebSocket } from '@/composables/useWebSocket';
 ```
+
+通用终端位于 `components/AppTerminal/`，演示页为 `views/playground/TerminalDemo.vue`，本地演示和网关适配与渲染组件分开。接口和后端接入约定见 [terminal.md](./terminal.md)。
+
+通用图表位于 `components/AppChart/`，集中管理 ECharts 按需注册、主题和生命周期；页面负责数据与原生 option。图表演示为 `views/playground/ChartsDemo.vue`，使用说明见 [charts.md](./charts.md)。
 
 SSE 新导入方式：
 
 ```ts
-import { useSSE } from '@/composables/useSSE'
+import { useSSE } from '@/composables/useSSE';
 ```
 
 多级菜单和宽度配置见 [menu.md](./menu.md)。
 
 用户、角色、权限和菜单管理见 [system.md](./system.md)。
+
+多页签、KeepAlive 缓存和生命周期约定见 [page-tabs.md](./page-tabs.md)。
 
 公共表单、表格和分页的配置、插槽与用法见 [components.md](./components.md)。
 

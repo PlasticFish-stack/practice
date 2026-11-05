@@ -4,11 +4,11 @@
 
 ## 为什么选这个方案
 
-| 方案 | 适合的情况 | 限制 |
-| --- | --- | --- |
-| 原生 EventSource | GET 订阅、Cookie 鉴权，希望浏览器管理重连 | 构造参数只有 URL 和 withCredentials，不能直接设置 Authorization 请求头或 POST body |
-| Fetch + eventsource-parser（当前方案） | Bearer Token、自定义请求头、POST 流式响应 | 面向支持 Fetch 流式读取的现代浏览器，需要自己管理连接生命周期 |
-| @microsoft/fetch-event-source | 希望由完整客户端库管理读取、重连、页面可见性行为 | 需要理解并配置它的重连和页面隐藏策略 |
+| 方案                                   | 适合的情况                                       | 限制                                                                               |
+| -------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| 原生 EventSource                       | GET 订阅、Cookie 鉴权，希望浏览器管理重连        | 构造参数只有 URL 和 withCredentials，不能直接设置 Authorization 请求头或 POST body |
+| Fetch + eventsource-parser（当前方案） | Bearer Token、自定义请求头、POST 流式响应        | 面向支持 Fetch 流式读取的现代浏览器，需要自己管理连接生命周期                      |
+| @microsoft/fetch-event-source          | 希望由完整客户端库管理读取、重连、页面可见性行为 | 需要理解并配置它的重连和页面隐藏策略                                               |
 
 原生 EventSource 已在现代主流浏览器中广泛支持。选择 Fetch 是为了请求控制能力，并不意味着它兼容更多旧浏览器。项目目前没有指定 WebView/旧浏览器版本，不能据此承诺这些环境可用。
 
@@ -22,23 +22,23 @@
 
 ```vue
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useSSE } from '@/composables/useSSE'
+import { onMounted } from 'vue';
+import { useSSE } from '@/composables/useSSE';
 
 const { connect, close, status, error, lastEvent } = useSSE('/api/devices/events', {
   onMessage(message) {
     // 所有事件都会到这里，包含自定义 event；data 保持字符串。
     if (message.event === 'device') {
-      const device = JSON.parse(message.data)
-      console.log(device)
+      const device = JSON.parse(message.data);
+      console.log(device);
     }
   },
   onError(error) {
-    console.error(error)
+    console.error(error);
   },
-})
+});
 
-onMounted(connect)
+onMounted(connect);
 // 在 setup 的作用域内创建时，销毁组件会自动 close()。
 </script>
 
@@ -60,11 +60,11 @@ const { connect, close } = useSSE('/api/chat', {
   body: JSON.stringify({ prompt: '你好' }),
   onMessage(message) {
     // [DONE] 是部分服务的业务约定，不是 SSE 协议。
-    if (message.data === '[DONE]') close()
-    else console.log(message.data)
+    if (message.data === '[DONE]') close();
+    else console.log(message.data);
   },
-})
-connect()
+});
+connect();
 ```
 
 POST 默认不自动重连，正常 EOF 直接结束；网络异常通过 error / onError 暴露。显式 retry: true 前，需要确保请求体可重复发送，并由后端保证重复执行安全。

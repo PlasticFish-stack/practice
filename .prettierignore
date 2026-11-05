@@ -1,0 +1,18 @@
+# Dependencies and generated output
+node_modules/
+dist/
+dist-ssr/
+artifacts/
+test-results/
+playwright-report/
+coverage/
+.husky/_/
+
+# Generated declarations and lockfile
+auto-imports.d.ts
+components.d.ts
+pnpm-lock.yaml
+
+# Static assets
+public/
+src/assets/

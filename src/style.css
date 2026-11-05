@@ -19,3 +19,51 @@ body {
   flex-direction: column;
   box-sizing: border-box;
 }
+
+/* Only theme changes use this fade; leave other View Transitions untouched. */
+html.is-theme-transitioning *,
+html.is-theme-transitioning *::before,
+html.is-theme-transitioning *::after {
+  /* Capture final theme colors instead of half-finished Element Plus color transitions. */
+  transition: none !important;
+}
+
+html.is-theme-transitioning::view-transition-group(root),
+html.is-theme-transitioning::view-transition-old(root),
+html.is-theme-transitioning::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.is-theme-transitioning::view-transition-old(root) {
+  z-index: 1;
+  opacity: 1;
+}
+
+html.is-theme-transitioning::view-transition-new(root) {
+  z-index: 2;
+  animation: theme-daylight 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+html.is-theme-transitioning.dark::view-transition-new(root) {
+  animation-duration: 420ms;
+}
+
+@keyframes theme-daylight {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+html.is-theme-transitioning::view-transition {
+  pointer-events: none;
+}
+
+/* The closing dropdown must not linger in the captured old-theme image. */
+.theme-options-popper[class*='-leave-'],
+html.is-theme-transitioning .theme-options-popper {
+  visibility: hidden;
+}

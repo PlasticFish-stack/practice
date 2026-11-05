@@ -17,7 +17,8 @@ html .el-popper {
   --el-popper-border-radius: var(--app-radius-lg);
 }
 
-html .el-message, html .el-notification {
+html .el-message,
+html .el-notification {
   border-radius: var(--app-radius-lg);
 }
 
@@ -26,7 +27,9 @@ html .el-form-item {
 }
 
 /* 保留 size、输入分组、数字框按钮等原生结构，只调整默认文本框内边距。 */
-html .el-input:not(.el-input--small):not(.el-input--large):not(:where(.el-input-number *)) > .el-input__wrapper {
+html
+  .el-input:not(.el-input--small):not(.el-input--large):not(:where(.el-input-number *))
+  > .el-input__wrapper {
   padding-inline: var(--app-control-padding-inline);
 }
 
@@ -47,7 +50,10 @@ html .el-select-dropdown__list:not(.el-vl__window) .el-select-dropdown__item {
   line-height: var(--app-control-height);
 }
 
-html .el-select-dropdown__list:not(.el-vl__window) .el-select-dropdown__item + .el-select-dropdown__item {
+html
+  .el-select-dropdown__list:not(.el-vl__window)
+  .el-select-dropdown__item
+  + .el-select-dropdown__item {
   margin-block-start: var(--app-select-option-gap);
 }
 
@@ -93,12 +99,23 @@ html .el-textarea__inner {
 }
 
 /* 原生的 1px inset shadow 就是输入边框，保留它；取消额外光晕和渐变。 */
-html .el-input__wrapper, html .el-select__wrapper, html .el-textarea__inner {
+html .el-input__wrapper,
+html .el-select__wrapper,
+html .el-textarea__inner {
   transition: none;
 }
 
 /* 非实心按钮只改变边框，背景和文字维持静止态；不影响禁用和实心按钮。 */
-html .el-button:not(:where(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info)),
+html
+  .el-button:not(
+    :where(
+      .el-button--primary,
+      .el-button--success,
+      .el-button--warning,
+      .el-button--danger,
+      .el-button--info
+    )
+  ),
 html .el-button:is(.is-plain, .is-dashed, .is-text, .is-link) {
   --el-button-hover-bg-color: var(--el-button-bg-color);
   --el-button-active-bg-color: var(--el-button-bg-color);
@@ -110,7 +127,14 @@ html .el-button:is(.is-plain, .is-dashed, .is-text, .is-link) {
   --el-button-active-border-color: var(--el-color-primary);
 }
 
-html .el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info):is(.is-plain, .is-dashed) {
+html
+  .el-button:is(
+    .el-button--primary,
+    .el-button--success,
+    .el-button--warning,
+    .el-button--danger,
+    .el-button--info
+  ):is(.is-plain, .is-dashed) {
   --el-button-hover-border-color: var(--el-button-text-color);
   --el-button-active-border-color: var(--el-button-text-color);
 }
