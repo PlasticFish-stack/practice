@@ -40,7 +40,7 @@ test('implemented pages and their group have menu metadata', () => {
   assert.deepEqual(menus.map((item) => item.path).sort(), [
     '/account/center',
     '/device',
-    '/observe',
+    '/overview',
     '/playground',
     '/playground/charts',
     '/playground/terminal',
@@ -50,13 +50,11 @@ test('implemented pages and their group have menu metadata', () => {
     '/system/roles',
     '/system/users',
   ]);
-  for (const item of menus.filter(
-    (item) => !['/account/center', '/system', '/observe'].includes(item.path),
-  ))
+  for (const item of menus.filter((item) => !['/account/center', '/system'].includes(item.path)))
     assert.ok(item.meta.permissions.length > 0);
 });
 
-test('observer uses the existing layout and remains separate from Cookie permissions', async () => {
+test('overview uses unified Cookie login, enforces observe:read and redirects old bookmarks', async () => {
   const router = createTestRouter();
   const { accessibleMenus, canAccessRoute, installAuthGuard } =
     createLoader()('src/router/access.ts');
@@ -71,21 +69,19 @@ test('observer uses the existing layout and remains separate from Cookie permiss
   };
   installAuthGuard(router, auth);
   await router.push('/observe');
-  assert.deepEqual(
-    router.currentRoute.value.matched.map((record) => record.name),
-    ['layout', 'observe'],
-  );
-  assert.equal(sessionChecks, 0);
-  assert.equal(router.currentRoute.value.meta.public, undefined);
-  assert.deepEqual(
-    Array.from(accessibleMenus(router, auth), (item) => item.index),
-    ['observe'],
-  );
-  assert.equal(canAccessRoute(router.resolve('/device'), auth), false);
-  assert.equal(canAccessRoute(router.resolve('/observe'), auth), true);
-  await router.push('/device');
   assert.equal(router.currentRoute.value.name, 'login');
+  assert.equal(router.currentRoute.value.query.redirect, '/overview');
   assert.ok(sessionChecks > 0);
+  assert.equal(accessibleMenus(router, auth).length, 0);
+  assert.equal(canAccessRoute(router.resolve('/device'), auth), false);
+  assert.equal(canAccessRoute(router.resolve('/overview'), auth), false);
+  auth.authenticated = true;
+  auth.can = (required) =>
+    required.length === 0 || required.every((code) => code === 'observe:read');
+  await router.push('/observe');
+  assert.equal(router.currentRoute.value.name, 'overview');
+  assert.equal(router.currentRoute.value.matched[0].name, 'layout');
+  assert.equal(canAccessRoute(router.resolve('/overview'), auth), true);
 });
 
 test('account group preserves existing URLs and redirects to personal center', async () => {

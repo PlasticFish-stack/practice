@@ -14,15 +14,15 @@ export interface MenuNode {
 /** 按原始路由层级生成菜单；隐藏布局可透传子项，无权限父级不会透传。 */
 export function buildMenuTree(
   router: Router,
-  can: (required: PermissionRequirement, record: RouteRecordRaw) => boolean,
+  can: (required: PermissionRequirement) => boolean,
   settings: readonly MenuSetting[] = [],
 ): MenuNode[] {
   function visit(records: readonly RouteRecordRaw[]): MenuNode[] {
     return records
       .flatMap((record) => {
         const setting = settings.find((item) => item.routeName === record.name);
-        if (setting && (!setting.visible || !can(setting.permissions, record))) return [];
-        if (!can(record.meta?.permissions ?? [], record)) return [];
+        if (setting && (!setting.visible || !can(setting.permissions))) return [];
+        if (!can(record.meta?.permissions ?? [])) return [];
         const children = visit(record.children ?? []);
         if (!record.meta?.menu) return children;
         if (typeof record.name !== 'string' || !record.meta.title) return [];

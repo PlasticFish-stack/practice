@@ -63,8 +63,7 @@ const breadcrumbs = computed(() =>
   padding: 0;
 }
 .main-container {
-  max-width: 1440px;
-  margin: 0 auto;
+  width: 100%;
   padding: var(--app-page-padding);
   box-sizing: border-box;
 }

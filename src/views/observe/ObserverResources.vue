@@ -175,7 +175,7 @@ const clientColumns: ColumnOptions<Client>[] = [
 }
 .resource-section {
   display: grid;
-  gap: var(--app-space-lg);
+  gap: var(--app-space-md);
   min-width: 0;
 }
 </style>

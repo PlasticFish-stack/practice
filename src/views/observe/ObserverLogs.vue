@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, shallowRef, useTemplateRef, watch } from 'vu
 import { ObserverError, type ObserverApi } from '@/api/xray';
 import type { Action, Coverage, LogQuery, LogRecord, Node } from '@/api/xray/types';
 import CoverageNotice from './CoverageNotice.vue';
+import LogDetails from './LogDetails.vue';
 import AppTable from '@/components/AppTable/AppTable.vue';
 import type { ColumnOptions, TableHandle } from '@/components/AppTable/types';
 import { formatTime, mergeLogs } from './format';
@@ -29,6 +30,7 @@ const total = shallowRef(0);
 const updatedAt = shallowRef<number | null>(null);
 let snapshot: LogQuery | null = null;
 let request: AbortController | undefined;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
 let rateLimitedUntil = 0;
 const stateLabel = computed(
   () =>
@@ -49,8 +51,21 @@ function handleVisibility() {
 }
 document.addEventListener('visibilitychange', handleVisibility);
 function cancelQuery() {
+  clearTimeout(retryTimer);
+  retryTimer = undefined;
   request?.abort();
   busy.value = false;
+}
+function retryLiveQuery() {
+  if (!active.value) return;
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(
+    () => {
+      retryTimer = undefined;
+      if (active.value) void loadLogs(true);
+    },
+    Math.max(0, rateLimitedUntil - Date.now()),
+  );
 }
 function mergeRecent(items: LogRecord[]) {
   const cutoff = props.api.now() - 3600000;
@@ -64,6 +79,7 @@ async function loadLogs(live: boolean, fresh = false) {
   if (!visible.value || !props.node.capabilities.access_logs) return;
   if (Date.now() < rateLimitedUntil) {
     error.value = '日志请求限流，请稍后重试';
+    if (live) retryLiveQuery();
     return;
   }
   const current = new AbortController();
@@ -71,6 +87,7 @@ async function loadLogs(live: boolean, fresh = false) {
   busy.value = true;
   error.value = '';
   if (fresh) {
+    expandedKeys.value = [];
     snapshot = null;
     page.value = 1;
     rows.value = [];
@@ -125,8 +142,10 @@ async function loadLogs(live: boolean, fresh = false) {
   } catch (cause) {
     if (!current.signal.aborted) {
       error.value = cause instanceof Error ? cause.message : '日志查询失败';
-      if (cause instanceof ObserverError && cause.status === 429)
+      if (cause instanceof ObserverError && cause.status === 429) {
         rateLimitedUntil = Date.now() + cause.retryAfterMs;
+        if (live) retryLiveQuery();
+      }
     }
   } finally {
     if (request === current && !current.signal.aborted) busy.value = false;
@@ -139,17 +158,25 @@ function toggleDetails(row: LogRecord) {
   logsTable.value?.toggleRowExpansion(row);
 }
 function handleRowClick(row: LogRecord, _column: unknown, event: Event) {
-  if (event.target instanceof Element && event.target.closest('button, .el-table__expand-icon'))
+  if (window.getSelection()?.isCollapsed === false) return;
+  if (
+    event.target instanceof Element &&
+    event.target.closest(
+      'button, a, input, textarea, select, [role="button"], .el-table__expand-icon',
+    )
+  )
     return;
   toggleDetails(row);
 }
 function handleExpandChange(_row: LogRecord, expanded: LogRecord[]) {
-  expandedKeys.value = expanded.map(logKey);
+  const visible = new Set(rows.value.map(logKey));
+  expandedKeys.value = expanded.map(logKey).filter((key) => visible.has(key));
 }
 function queryHistory() {
   void loadLogs(false, true);
 }
 function changePage(value: { page: number; pageSize: number }) {
+  expandedKeys.value = [];
   page.value = value.page;
   pageSize.value = value.pageSize;
   if (snapshot) snapshot = { ...snapshot, size: value.pageSize };
@@ -159,12 +186,18 @@ function togglePause() {
   paused.value = !paused.value;
 }
 watch([mode, action], () => {
+  expandedKeys.value = [];
   cancelQuery();
   rows.value = [];
   coverage.value = null;
   error.value = '';
   streamError.value = '';
   snapshot = null;
+});
+watch(rows, (items) => {
+  const visible = new Set(items.map(logKey));
+  const keys = expandedKeys.value.filter((key) => visible.has(key));
+  if (keys.length !== expandedKeys.value.length) expandedKeys.value = keys;
 });
 watch(
   [active, action],
@@ -252,6 +285,9 @@ const logColumns: ColumnOptions<LogRecord>[] = [
 ];
 function logKey(row: LogRecord) {
   return row.node_id + ':' + row.log_id;
+}
+function detailId(row: LogRecord) {
+  return `observe-log-details-${encodeURIComponent(logKey(row))}`;
 }
 </script>
 
@@ -381,7 +417,12 @@ function logKey(row: LogRecord) {
         :rows="rows"
         :column-options="logColumns"
         :loading="busy"
-        :table-options="{ rowKey: logKey, maxHeight: 480, stripe: true }"
+        :table-options="{
+          rowKey: logKey,
+          maxHeight: 480,
+          stripe: true,
+          expandRowKeys: expandedKeys,
+        }"
         :pagination="
           mode === 'history' ? { page, pageSize, total: Math.min(total, 100000) } : undefined
         "
@@ -409,48 +450,17 @@ function logKey(row: LogRecord) {
             link
             type="primary"
             :aria-expanded="expandedKeys.includes(logKey(row))"
+            :aria-controls="detailId(row)"
             @click.stop="toggleDetails(row)"
           >
             {{ expandedKeys.includes(logKey(row)) ? '收起详情' : '展开详情' }}
           </el-button>
         </template>
         <template #cell-details="{ row }">
-          <div
-            class="log-details"
-            @click.stop
-          >
-            <dl class="log-detail-fields">
-              <dt>消息</dt>
-              <dd class="log-message">{{ row.message }}</dd>
-              <dt>日志 ID</dt>
-              <dd>{{ row.log_id }}</dd>
-              <dt>节点 ID</dt>
-              <dd>{{ row.node_id }}</dd>
-              <dt>入站 ID</dt>
-              <dd>{{ row.inbound_id ?? '—' }}</dd>
-              <dt>客户端 ID</dt>
-              <dd>{{ row.client_id ?? '—' }}</dd>
-              <dt>观察时间</dt>
-              <dd>{{ row.observed_at }} ({{ row.observed_at_ms }})</dd>
-              <dt>接收时间</dt>
-              <dd>{{ row.received_at }} ({{ row.received_at_ms }})</dd>
-              <dt>来源 IP / 端口</dt>
-              <dd>
-                {{ row.source_ip ?? '—' }} / {{ row.source_port ?? '—'
-                }}{{ row.source_masked ? '（已脱敏）' : '' }}
-              </dd>
-              <dt>目标域名</dt>
-              <dd>{{ row.target_domain ?? '—' }}</dd>
-              <dt>目标 IP / 端口</dt>
-              <dd>{{ row.target_ip ?? '—' }} / {{ row.target_port ?? '—' }}</dd>
-              <dt>网络</dt>
-              <dd>{{ row.network }}</dd>
-              <dt>outbound</dt>
-              <dd>{{ row.outbound_tag ?? '—' }}</dd>
-              <dt>解析状态</dt>
-              <dd>{{ row.parse_status }}</dd>
-            </dl>
-          </div>
+          <LogDetails
+            :id="detailId(row)"
+            :record="row"
+          />
         </template>
         <template #cell-action="{ row }">
           <el-tag
@@ -517,27 +527,6 @@ function logKey(row: LogRecord) {
   flex-wrap: wrap;
   gap: 12px;
   padding: 12px;
-}
-.log-details {
-  width: min(900px, calc(100vw - 100px));
-  padding: 16px;
-  box-sizing: border-box;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  user-select: text;
-}
-.log-detail-fields {
-  display: grid;
-  grid-template-columns: minmax(0, 110px) minmax(0, 1fr);
-  gap: 10px;
-  margin: 0;
-}
-.log-detail-fields dt {
-  color: var(--app-color-text-secondary);
-}
-.log-detail-fields dd {
-  min-width: 0;
-  margin: 0;
 }
 .logs-table {
   width: 100%;

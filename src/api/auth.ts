@@ -8,6 +8,19 @@ export interface LoginCredentials {
 }
 
 export const authApi = {
+  async setupStatus(signal?: AbortSignal) {
+    return (
+      await api.get<{ setup_required: boolean }>('/api/auth/setup-status', undefined, { signal })
+    ).data;
+  },
+  async setup(credentials: LoginCredentials, bootstrapCode: string) {
+    await api.get<null>('/api/auth/csrf');
+    return (
+      await api.post<SessionUser>('/api/auth/setup', credentials, {
+        headers: { Authorization: `Bearer ${bootstrapCode.trim().replace(/^Bearer\s+/i, '')}` },
+      })
+    ).data;
+  },
   async session(signal?: AbortSignal) {
     return (await api.get<SessionUser>('/api/auth/session', undefined, { signal })).data;
   },

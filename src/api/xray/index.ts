@@ -48,14 +48,10 @@ export async function responseError(response: Response) {
   );
 }
 
-export function createObserverApi(
-  token: string,
-  unauthorized: () => void,
-  fetcher: typeof fetch = fetch,
-) {
+export function createObserverApi(unauthorized: () => void, fetcher: typeof fetch = fetch) {
   let serverTime = Date.now();
   let receivedTime = Date.now();
-  const headers = () => ({ Authorization: `Bearer ${token}`, Accept: 'application/json' });
+  const headers = () => ({ Accept: 'application/json' });
   function url(path: string, query: object = {}) {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) {
@@ -74,7 +70,7 @@ export function createObserverApi(
     const timeout = AbortSignal.timeout(15000);
     const response = await fetcher(url(path, query), {
       headers: headers(),
-      credentials: 'omit',
+      credentials: 'same-origin',
       cache: 'no-store',
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });

@@ -4,8 +4,6 @@ import type { Permission } from '@/auth/permissions';
 declare module 'vue-router' {
   interface RouteMeta {
     public?: boolean;
-    /** 观察页在工作区内使用独立 Bearer 鉴权，不复用后台 Cookie 会话。 */
-    authentication?: 'observer';
     permissions?: readonly Permission[];
     title?: string;
     searchable?: boolean;

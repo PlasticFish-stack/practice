@@ -65,7 +65,7 @@ Prettier 负责格式，ESLint 负责代码检查。VS Code 推荐扩展和保�
 
 ## 接后端与部署
 
-Xray 观察面板入口为 `/observe`，使用独立 Bearer 令牌，不依赖演示后台的 Cookie 登录。开发代理通过 `XRAY_API_TARGET` 配置（可放在 `.env.local`），生产环境使用同源 `/api/v1`。功能范围、联调及验证说明见 [观察面板](docs/observer.md)。
+运行监控已并入统一工作区登录，入口为 `/overview`（旧 `/observe` 自动跳转）。首次设置独立工作区账号后，通过 HttpOnly Cookie 恢复登录，切菜单和刷新无需再输令牌。开发代理通过 `XRAY_API_TARGET` 配置（可放在 `.env.local`），生产环境使用同源 `/api/v1`。功能范围、联调及验证说明见 [观察面板](docs/observer.md)。
 
 ```sh
 pnpm build

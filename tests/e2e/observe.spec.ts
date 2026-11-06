@@ -74,6 +74,8 @@ async function json(route: Route, body: unknown, status = 200, headers = {}) {
   });
 }
 type FixtureOptions = {
+  anonymous?: boolean;
+  realAuth?: boolean;
   history?: boolean;
   emptyLogs?: boolean;
   logs?: LogRecord[];
@@ -81,23 +83,77 @@ type FixtureOptions = {
   stream?: (route: Route, count: number) => Promise<void>;
 };
 async function fixture(page: Page, options: FixtureOptions = {}) {
+  if (!options.realAuth) {
+    let currentSession = 'active';
+    if (!options.anonymous)
+      await page.context().addCookies([
+        {
+          name: 'workspace-test-session',
+          value: currentSession,
+          url: 'http://127.0.0.1:5174',
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+      ]);
+    const user = {
+      id: 'workspace-test',
+      username: 'workspace-user',
+      displayName: '工作区用户',
+      roles: ['observer'],
+      permissions: ['observe:read'],
+    };
+    await page.route('**/api/auth/**', async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      const headers = await route.request().allHeaders();
+      const valid = (headers.cookie || '').includes(`workspace-test-session=${currentSession}`);
+      const send = (status: number, data: unknown = null, message = 'ok', extra = {}) =>
+        json(route, { code: status, data, message }, status, extra);
+      if (path.endsWith('/setup-status')) return send(200, { setup_required: false });
+      if (path.endsWith('/csrf'))
+        return send(200, null, 'ok', {
+          'Set-Cookie': 'XSRF-TOKEN=test-csrf; Path=/; SameSite=Lax',
+        });
+      if (path.endsWith('/login')) {
+        const credentials = route.request().postDataJSON();
+        if (
+          credentials.username !== 'workspace-user' ||
+          credentials.password !== 'Workspace-Test-Password'
+        )
+          return send(401, null, '用户名或密码错误');
+        currentSession = `active-${Date.now()}`;
+        return send(200, user, 'ok', {
+          'Set-Cookie': `workspace-test-session=${currentSession}; Path=/; HttpOnly; SameSite=Lax`,
+        });
+      }
+      if (path.endsWith('/logout')) {
+        currentSession = 'revoked';
+        return send(200, null, 'ok', {
+          'Set-Cookie': 'workspace-test-session=; Path=/; Max-Age=0; HttpOnly',
+        });
+      }
+      return valid ? send(200, user) : send(401, null, '登录已过期，请重新登录');
+    });
+  }
   let streams = 0;
   const requests: {
     path: string;
     params: URLSearchParams;
     auth: string | undefined;
+    cookie: string | undefined;
     cursor: string | undefined;
   }[] = [];
   await page.route('**/api/v1/**', async (route) => {
     const url = new URL(route.request().url());
+    const requestHeaders = await route.request().allHeaders();
     requests.push({
       path: url.pathname,
       params: url.searchParams,
       auth: route.request().headers().authorization,
+      cookie: requestHeaders.cookie,
       cursor: route.request().headers()['last-event-id'],
     });
     const path = url.pathname.replace('/api/v1', '');
-    if (route.request().headers().authorization !== 'Bearer test-observer-token')
+    if (!/(workspace-test-session=active|mock-session=)/.test(requestHeaders.cookie || ''))
       return json(
         route,
         { error: { message: '令牌无效', code: 'invalid_token', detail: {}, request_id: 'test' } },
@@ -224,27 +280,127 @@ async function fixture(page: Page, options: FixtureOptions = {}) {
   });
   return requests;
 }
-async function connect(page: Page, token = 'test-observer-token') {
-  await page.goto('/observe');
-  await page.getByLabel('访问令牌', { exact: true }).fill(token);
-  await page.getByRole('button', { name: '连接观察服务' }).click();
+async function connect(page: Page) {
+  await page.goto('/overview');
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
 }
-test('独立鉴权、未知状态、零值、覆盖提示和失效清理', async ({ page }) => {
+
+// 模拟持续开放的 SSE，确保 REST 补查重试不是偶然由流断开触发。
+async function keepStreamOpen(page: Page) {
+  await page.addInitScript(() => {
+    const fetcher = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (!url.split('?')[0]!.endsWith('/api/v1/stream')) return fetcher(input, init);
+      const signal = init?.signal;
+      let abort = () => {};
+      return Promise.resolve(
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('event: ping\ndata: {}\n\n'));
+              abort = () => controller.error(signal?.reason);
+              signal?.addEventListener('abort', abort, { once: true });
+            },
+            cancel() {
+              signal?.removeEventListener('abort', abort);
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      );
+    };
+  });
+}
+
+test('详情在重新查询、切换模式和翻页后收起，按钮关联正确的详情区域', async ({ page }) => {
+  await fixture(page, { history: true, logs: [log()] });
+  await keepStreamOpen(page);
+  await connect(page);
+  const details = page.getByRole('region', { name: '日志详情 log-1', exact: true });
+  await page.getByRole('button', { name: '展开详情', exact: true }).click();
+  await expect(details).toBeVisible();
+  await expect(page.getByRole('button', { name: '收起详情' })).toHaveAttribute(
+    'aria-controls',
+    (await details.getAttribute('id')) as string,
+  );
+  await page.getByText('历史查询', { exact: true }).click();
+  await expect(page.getByText('快照内共 60 条')).toBeVisible();
+  await expect(details).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '展开详情', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await page.getByRole('button', { name: '展开详情', exact: true }).click();
+  await page.getByRole('button', { name: '查询日志', exact: true }).click();
+  await expect(details).toHaveCount(0);
+  await page.getByRole('button', { name: '展开详情', exact: true }).click();
+  await page
+    .locator('.panel')
+    .last()
+    .getByRole('button', { name: 'Go to next page', exact: true })
+    .click();
+  await expect(details).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '展开详情', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+});
+
+test('实时补查限流后自动重试，暂停时取消尚未执行的重试', async ({ page }) => {
+  await fixture(page);
+  await keepStreamOpen(page);
+  const times: number[] = [];
+  await page.route('**/api/v1/logs?*', async (route) => {
+    times.push(Date.now());
+    if (times.length === 1 || times.length === 3)
+      return json(route, { error: { code: 'rate_limited', message: '日志补查限流' } }, 429, {
+        'Retry-After': '2',
+      });
+    const params = new URL(route.request().url()).searchParams;
+    return json(route, {
+      items: [log()],
+      page: 1,
+      size: 200,
+      total: 1,
+      from_ms: Number(params.get('from_ms')),
+      to_ms: now,
+      as_of_ms: now,
+      coverage,
+    });
+  });
+  await connect(page);
+  await expect.poll(() => times.length).toBe(2);
+  expect(times[1]! - times[0]!).toBeGreaterThanOrEqual(1900);
+  await expect(page.locator('.logs-table .el-table__row')).toHaveCount(1);
+  await expect(page.getByText('日志补查限流', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '暂停实时', exact: true }).click();
+  await page.getByRole('button', { name: '恢复实时', exact: true }).click();
+  await expect(page.getByText('日志补查限流', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '暂停实时', exact: true }).click();
+  await page.waitForTimeout(2200);
+  expect(times).toHaveLength(3);
+});
+test('统一登录、未知状态、零值、覆盖提示和失效清理', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const oldApi: string[] = [];
   page.on('request', (request) => {
     if (/\/api\/(auth|system)\//.test(request.url())) oldApi.push(request.url());
   });
-  const requests = await fixture(page);
-  await connect(page, 'wrong-token');
-  await expect(page.getByRole('alert')).toContainText('令牌已失效');
-  await page.getByLabel('访问令牌', { exact: true }).fill('test-observer-token');
-  await page.getByRole('button', { name: '连接观察服务' }).click();
+  const requests = await fixture(page, { anonymous: true });
+  await page.goto('/overview');
+  await expect(page).toHaveURL(/\/login/);
+  await page.getByRole('textbox', { name: '用户名', exact: true }).fill('workspace-user');
+  await page.getByLabel('密码', { exact: true }).fill('wrong-password');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('用户名或密码错误');
+  await page.getByLabel('密码', { exact: true }).fill('Workspace-Test-Password');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
   await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
   await expect(page.getByRole('img', { name: '鲸栈' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Xray 观察面板', exact: true })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Xray 观察面板', exact: true })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: '运行概览', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: '运行概览', exact: true })).toBeVisible();
   await expect(page.getByText('Xray：未探测')).toBeVisible();
   await expect(page.getByText(/部分覆盖/).first()).toBeVisible();
   await expect(page.getByText('0.0%', { exact: true }).first()).toBeVisible();
@@ -256,8 +412,11 @@ test('独立鉴权、未知状态、零值、覆盖提示和失效清理', async
   const stored = await page.evaluate(() =>
     JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }),
   );
-  expect(stored).not.toContain('test-observer-token');
-  expect(oldApi).toEqual([]);
+  expect(stored).not.toContain('Workspace-Test-Password');
+  expect(stored).not.toContain('workspace-test-session');
+  expect(oldApi.some((url) => url.includes('/api/auth/login'))).toBe(true);
+  expect(oldApi.some((url) => url.includes('/api/system/'))).toBe(false);
+  expect(requests.every((request) => request.auth === undefined)).toBe(true);
   expect(
     requests
       .filter((request) => request.path.endsWith('/host/metrics'))
@@ -270,8 +429,11 @@ test('独立鉴权、未知状态、零值、覆盖提示和失效清理', async
   await page.route('**/api/v1/overview', (route) =>
     json(route, { error: { code: 'invalid_token', message: '令牌失效' } }, 401),
   );
+  await page.route('**/api/auth/session', (route) =>
+    json(route, { code: 401, data: null, message: '登录已过期，请重新登录' }, 401),
+  );
   await page.getByRole('button', { name: '刷新概览' }).click();
-  await expect(page.getByRole('heading', { name: '连接你的观察节点' })).toBeVisible();
+  await expect(page).toHaveURL(/\/login/);
   await expect(page.locator('.logs-table')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -429,23 +591,22 @@ test('历史查询翻页保持同一时间窗与快照', async ({ page }) => {
   expect(fresh.params.has('as_of_ms')).toBe(false);
 });
 test('从原后台菜单进入观察页，共享页签并在离开时释放连接', async ({ page }) => {
-  await fixture(page);
+  await fixture(page, { realAuth: true });
   await page.goto('/device');
-  await page.getByRole('textbox', { name: '用户名', exact: true }).fill('viewer');
+  await page.getByRole('textbox', { name: '用户名', exact: true }).fill('admin');
   await page.getByLabel('密码', { exact: true }).fill('Demo@123456');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await expect(page.getByRole('tab', { name: '设备列表', exact: true })).toBeVisible();
-  await page.getByRole('menuitem', { name: 'Xray 观察面板', exact: true }).click();
-  await page.getByLabel('访问令牌', { exact: true }).fill('test-observer-token');
-  await page.getByRole('button', { name: '连接观察服务' }).click();
+  await page.getByRole('menuitem', { name: '运行概览', exact: true }).click();
   await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
   await page.getByRole('tab', { name: '设备列表', exact: true }).click();
-  await expect(page.locator('.observer-page')).toHaveCount(0);
-  await page.getByRole('tab', { name: 'Xray 观察面板', exact: true }).click();
-  await expect(page.getByLabel('访问令牌', { exact: true })).toHaveValue('');
-  await page.getByRole('button', { name: '关闭页签：Xray 观察面板', exact: true }).click();
+  await expect(page.locator('.overview-page')).toHaveCount(0);
+  await page.getByRole('tab', { name: '运行概览', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByLabel('访问令牌', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '关闭页签：运行概览', exact: true }).click();
   await expect(page).toHaveURL('/device');
-  await expect(page.getByRole('tab', { name: 'Xray 观察面板', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: '运行概览', exact: true })).toHaveCount(0);
 });
 test('SSE 透传游标、409 清游标重建并去重补查', async ({ page }) => {
   const cursor = 'boot:7:abcdef0123456789';
@@ -473,12 +634,15 @@ test('SSE 透传游标、409 清游标重建并去重补查', async ({ page }) =
   expect(streams[0]!.cursor).toBeUndefined();
   expect(streams[1]!.cursor).toBe(cursor);
   expect(streams[2]!.cursor).toBeUndefined();
-  expect(streams.every((request) => request.auth === 'Bearer test-observer-token')).toBe(true);
+  expect(streams.every((request) => request.auth === undefined && Boolean(request.cookie))).toBe(
+    true,
+  );
   await expect(page.locator('.logs-table .el-table__body tbody tr')).toHaveCount(1);
   expect(
     requests.filter((request) => request.path.endsWith('/logs')).length,
   ).toBeGreaterThanOrEqual(2);
-  await page.getByRole('button', { name: '断开连接' }).click();
+  await page.getByRole('button', { name: '账户菜单' }).click();
+  await page.getByRole('menuitem', { name: '退出登录', exact: true }).click();
   const count = streams.length;
   await page.waitForTimeout(1200);
   expect(requests.filter((request) => request.path.endsWith('/stream'))).toHaveLength(count);
@@ -502,7 +666,8 @@ test('429 实时连接遵守 Retry-After', async ({ page }) => {
   await expect(page.getByText('实时连接限流，正在等待重试')).toBeVisible();
   await expect.poll(() => times.length, { timeout: 10000 }).toBeGreaterThanOrEqual(2);
   expect(times[1]! - times[0]!).toBeGreaterThanOrEqual(3900);
-  await page.getByRole('button', { name: '断开连接' }).click();
+  await page.getByRole('button', { name: '账户菜单' }).click();
+  await page.getByRole('menuitem', { name: '退出登录', exact: true }).click();
 });
 test('切换节点取消旧请求，迟到的指标不能覆盖新节点', async ({ page }) => {
   await fixture(page);
@@ -557,7 +722,7 @@ test('切换节点取消旧请求，迟到的指标不能覆盖新节点', async
   release();
   await expect(page.getByText('12.0%', { exact: true })).toHaveCount(0);
 });
-test('窄屏可用且刷新后不保留令牌', async ({ page }) => {
+test('窄屏可用且刷新后自动复用工作区会话', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await fixture(page);
   await connect(page);
@@ -566,45 +731,154 @@ test('窄屏可用且刷新后不保留令牌', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'artifacts/observe-mobile.png', fullPage: true });
   await page.reload();
-  await expect(page.getByLabel('访问令牌', { exact: true })).toHaveValue('');
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByLabel('访问令牌', { exact: true })).toHaveCount(0);
 });
-test('真实后端 smoke（显式提供测试令牌时运行）', async ({ page }) => {
-  test.skip(!process.env.OBSERVER_TEST_TOKEN, '仅在明确配置本地联调环境时运行');
-  const errors: string[] = [];
-  const failed: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('response', (response) => {
-    if (response.url().includes('/api/v1/') && response.status() >= 400)
-      failed.push(`${response.status()} ${new URL(response.url()).pathname}`);
+test('全宽工作台充分使用大屏，指标与资源平铺', async ({ page }) => {
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  await fixture(page);
+  await connect(page);
+  await expect(page.locator('.logs-table .el-table__row')).toHaveCount(1);
+  const main = await page.locator('.main-container').boundingBox();
+  expect(main!.width).toBeGreaterThan(2000);
+  const host = await page.locator('.host-panel').boundingBox();
+  const resources = await page.locator('.resources-panel').boundingBox();
+  expect(Math.abs(host!.y - resources!.y)).toBeLessThan(2);
+  expect(resources!.x).toBeGreaterThan(host!.x + host!.width);
+  await page.screenshot({ path: 'artifacts/overview-wide.png', fullPage: true });
+});
+
+test('首次设置独立账号只用一次校验码，成功后刷新直接进入工作台', async ({ page }) => {
+  await fixture(page, { anonymous: true });
+  let configured = false;
+  let setups = 0;
+  await page.route('**/api/auth/setup-status', (route) =>
+    json(route, { code: 200, message: 'ok', data: { setup_required: !configured } }),
+  );
+  await page.route('**/api/auth/setup', async (route) => {
+    setups++;
+    const headers = await route.request().allHeaders();
+    expect(headers.authorization).toBe('Bearer initial-test-code');
+    expect(headers['x-xsrf-token']).toBe('test-csrf');
+    expect(route.request().postDataJSON()).toEqual({
+      username: 'workspace-user',
+      password: 'Initial-Workspace-Password',
+    });
+    configured = true;
+    return json(
+      route,
+      {
+        code: 200,
+        message: 'ok',
+        data: {
+          id: 'workspace-test',
+          username: 'workspace-user',
+          displayName: '工作区用户',
+          roles: ['observer'],
+          permissions: ['observe:read'],
+        },
+      },
+      200,
+      { 'Set-Cookie': 'workspace-test-session=active; Path=/; HttpOnly; SameSite=Lax' },
+    );
   });
-  await page.setViewportSize({ width: 1440, height: 1100 });
-  await page.goto(`${process.env.OBSERVER_LIVE_URL || ''}/observe`);
-  await page.getByLabel('访问令牌', { exact: true }).fill(process.env.OBSERVER_TEST_TOKEN!);
-  await page.getByRole('button', { name: '连接观察服务' }).click();
-  await expect(page.getByText('真实数据 · v1.0.1')).toBeVisible();
+  await page.goto('/login');
+  await page.getByRole('textbox', { name: '用户名', exact: true }).fill('workspace-user');
+  await page.getByLabel('密码', { exact: true }).fill('Initial-Workspace-Password');
+  await page.getByLabel('确认密码', { exact: true }).fill('mismatch-password');
+  await page.getByLabel('初始化校验码', { exact: true }).fill('initial-test-code');
+  await page.getByRole('button', { name: '创建账号并进入', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('两次输入的密码不一致');
+  expect(setups).toBe(0);
+  await page.getByLabel('确认密码', { exact: true }).fill('Initial-Workspace-Password');
+  await page.getByRole('button', { name: '创建账号并进入', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByLabel('初始化校验码', { exact: true })).toHaveCount(0);
+  expect(setups).toBe(1);
+  expect(
+    await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage })),
+  ).not.toContain('initial-test-code');
+});
+
+test('备用实例首次创建账号、会话恢复、退出撤销及重新登录', async ({ page }) => {
+  test.skip(
+    !process.env.OBSERVER_TEST_BOOTSTRAP ||
+      !process.env.OBSERVER_TEST_USERNAME ||
+      !process.env.OBSERVER_TEST_PASSWORD,
+    '仅在显式配置的隔离备用实例执行首次设置',
+  );
+  const url = process.env.OBSERVER_LIVE_URL!;
+  // 防止测试账号意外写入用户正在使用的正式实例。
+  expect(new URL(url).port).toBe('18083');
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(url + '/login');
+  await page
+    .getByRole('textbox', { name: '用户名', exact: true })
+    .fill(process.env.OBSERVER_TEST_USERNAME!);
+  await page.getByLabel('密码', { exact: true }).fill(process.env.OBSERVER_TEST_PASSWORD!);
+  await page.getByLabel('确认密码', { exact: true }).fill(process.env.OBSERVER_TEST_PASSWORD!);
+  await page.getByLabel('初始化校验码', { exact: true }).fill(process.env.OBSERVER_TEST_BOOTSTRAP!);
+  await page.getByRole('button', { name: '创建账号并进入', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByText('实时连接中', { exact: true })).toBeVisible();
+  const oldSession = (await page.context().cookies()).find(
+    (cookie) => cookie.name === 'observe-session',
+  )!;
+  expect(oldSession.httpOnly).toBe(true);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByLabel('访问令牌', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '账户菜单' }).click();
+  await page.getByRole('menuitem', { name: '退出登录', exact: true }).click();
+  await expect(page).toHaveURL(/\/login/);
+  const replay = await page.request.get(url + '/api/v1/overview', {
+    headers: { Cookie: `observe-session=${oldSession.value}` },
+  });
+  expect(replay.status()).toBe(401);
+  await expect(page.getByLabel('初始化校验码', { exact: true })).toHaveCount(0);
+  await page
+    .getByRole('textbox', { name: '用户名', exact: true })
+    .fill(process.env.OBSERVER_TEST_USERNAME!);
+  await page.getByLabel('密码', { exact: true }).fill(process.env.OBSERVER_TEST_PASSWORD!);
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('真实后端统一登录 smoke（显式配置测试账号时运行）', async ({ page }) => {
+  test.skip(
+    !process.env.OBSERVER_TEST_USERNAME || !process.env.OBSERVER_TEST_PASSWORD,
+    '需要独立测试实例及测试账号',
+  );
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const url = process.env.OBSERVER_LIVE_URL || '';
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(url + '/overview');
+  await page
+    .getByRole('textbox', { name: '用户名', exact: true })
+    .fill(process.env.OBSERVER_TEST_USERNAME!);
+  await page.getByLabel('密码', { exact: true }).fill(process.env.OBSERVER_TEST_PASSWORD!);
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByText('真实数据', { exact: true })).toBeVisible();
   await expect(page.getByText('test-vless', { exact: true })).toBeVisible();
   await expect(page.getByText('实时连接中', { exact: true })).toBeVisible();
-  await expect(page.locator('.app-chart svg').first()).toBeVisible();
-  await page.getByRole('button', { name: '查看曲线' }).click();
-  await expect(page.locator('.traffic-panel').getByText(/累计上行/)).toBeVisible();
-  await page.getByText('历史查询', { exact: true }).click();
-  await expect(page.getByText(/快照内共/)).toBeVisible();
-  await page.getByText('实时日志', { exact: true }).click();
-  await expect(page.getByText('实时连接中', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '运行概览' })).toBeVisible();
+  await expect(page.getByLabel('访问令牌', { exact: true })).toHaveCount(0);
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page.getByRole('img', { name: '鲸栈' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Xray 观察面板', exact: true })).toBeVisible();
-  await page.screenshot({ path: 'artifacts/observe-live.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/overview-live.png', fullPage: true });
   await page.getByRole('button', { name: '切换主题', exact: true }).click();
   await page.getByRole('menuitem', { name: '深色模式', exact: true }).click();
-  await expect(page.locator('html')).toHaveClass(/dark/);
-  await expect(page.locator('.app-chart svg text').filter({ hasText: /^CPU$/ })).toHaveAttribute(
-    'fill',
-    '#c5cad3',
-  );
   await expect(page.locator('html')).not.toHaveClass(/is-theme-transitioning/);
-  await page.screenshot({ path: 'artifacts/observe-live-dark.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/overview-live-dark.png', fullPage: true });
+  await page.getByRole('button', { name: '账户菜单' }).click();
+  await page.getByRole('menuitem', { name: '退出登录', exact: true }).click();
+  await expect(page).toHaveURL(/\/login/);
   expect(errors).toEqual([]);
-  expect(failed).toEqual([]);
-  await page.getByRole('button', { name: '断开连接' }).click();
 });

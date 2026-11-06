@@ -21,6 +21,16 @@ export default defineConfig(({ command, mode }) => ({
         target: loadEnv(mode, process.cwd(), '').XRAY_API_TARGET || 'http://172.21.185.75:18080',
         changeOrigin: true,
       },
+      ...(mode === 'mock'
+        ? {}
+        : {
+            '/api/auth': {
+              target:
+                loadEnv(mode, process.cwd(), '').XRAY_API_TARGET || 'http://172.21.185.75:18080',
+              // 保留浏览器看到的 Host，使开发代理下的 Origin/CSRF 校验一致。
+              changeOrigin: false,
+            },
+          }),
     },
   },
   // 隔离测试服务与日常开发的预构建缓存，避免并发重建导致旧依赖 504。

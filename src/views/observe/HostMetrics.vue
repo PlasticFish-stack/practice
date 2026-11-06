@@ -162,7 +162,7 @@ const chart = computed<ChartOption>(() => ({
       <AppChart
         :option="chart"
         label="主机资源使用趋势"
-        :height="260"
+        :height="210"
         :empty="!latest"
         :loading="busy && !data"
         empty-text="暂无采样数据，等待采集器生成指标"
@@ -178,10 +178,20 @@ const chart = computed<ChartOption>(() => ({
 
 <style scoped>
 .panel {
-  padding: 24px;
+  container-type: inline-size;
+  padding: var(--app-space-md);
   border: 1px solid var(--app-color-border);
-  border-radius: 12px;
+  border-radius: var(--app-radius-lg);
   background: var(--app-color-surface);
+}
+@container (max-width: 600px) {
+  .metric-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .tools {
+    flex-wrap: wrap;
+  }
 }
 .panel-heading {
   display: flex;

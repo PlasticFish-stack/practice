@@ -55,13 +55,17 @@ test('landing page and menu reflect permissions; personal pages remain available
   for (const [permissions, landing] of [
     [['devices:read'], '/device'],
     [['playground:read'], '/playground/charts'],
+    [['observe:read'], '/overview'],
     [[], '/account/center'],
   ]) {
     const { router, auth, access } = setup({ session: async () => profile(permissions) });
     await router.push('/');
     assert.equal(router.currentRoute.value.path, landing);
-    assert.equal(access.accessibleMenus(router, auth).length, permissions.length + 2);
-    assert.ok(access.accessibleMenus(router, auth).some((item) => item.index === 'observe'));
+    assert.equal(access.accessibleMenus(router, auth).length, permissions.length + 1);
+    assert.equal(
+      access.accessibleMenus(router, auth).some((item) => item.index === 'overview'),
+      permissions.includes('observe:read'),
+    );
     assert.equal(auth.can('devices:update'), false);
   }
 });

@@ -35,7 +35,7 @@ export function startObserverStream(
         if (cursor) headers.set('Last-Event-ID', cursor);
         const response = await fetch(api.streamUrl(query), {
           headers,
-          credentials: 'omit',
+          credentials: 'same-origin',
           cache: 'no-store',
           signal,
         });

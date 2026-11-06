@@ -47,7 +47,7 @@ test('tabs preserve device filters and pagination; refresh and closing reset the
   );
   await expect(tab(page, '设备列表')).toHaveCount(0);
   await action(page, '关闭全部');
-  await expect(page).toHaveURL('/device');
+  await expect(page).toHaveURL('/overview');
   await expect(page.getByRole('tab')).toHaveCount(1);
 });
 
@@ -129,8 +129,8 @@ test('tabs support keyboard navigation, grouped closing and a dark mobile overfl
   await action(page, '关闭其他');
   await expect(page.getByRole('tab')).toHaveCount(1);
   await tab(page, '角色管理').press('Delete');
-  await expect(page).toHaveURL('/device');
-  await expect(tab(page, '设备列表')).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL('/overview');
+  await expect(tab(page, '运行概览')).toHaveAttribute('aria-selected', 'true');
 });
 
 test('profile query states share one tab, keep drafts while inactive, and logout clears all tabs', async ({
