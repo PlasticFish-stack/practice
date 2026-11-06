@@ -252,7 +252,7 @@ test('same-level menu labels align while nested labels keep their indentation', 
   const labels = page.locator(
     '.app-menu > .el-menu-item .menu-label, .app-menu > .el-sub-menu > .el-sub-menu__title .menu-label',
   );
-  await expect(labels).toHaveCount(4);
+  await expect(labels).toHaveCount(3);
   for (const width of [1280, 800]) {
     await page.setViewportSize({ width, height: 900 });
     const positions = await labels.evaluateAll((elements) =>

@@ -15,25 +15,6 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: '首页' },
     children: [
       {
-        path: 'overview',
-        name: 'overview',
-        component: () => import('@/views/observe/OverviewPage.vue'),
-        meta: {
-          title: '运行概览',
-          permissions: [PERMISSIONS.observeRead],
-          menu: true,
-          menuOrder: 0,
-          icon: 'DataAnalysis',
-          keepAlive: false,
-        },
-      },
-      {
-        path: 'observe',
-        name: 'observe-legacy',
-        redirect: { name: 'overview' },
-        meta: { menu: false, tab: false },
-      },
-      {
         path: 'account',
         name: 'account',
         redirect: { name: 'account-center' },

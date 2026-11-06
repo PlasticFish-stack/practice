@@ -149,7 +149,7 @@ async function fullscreen() {
         </template>
       </el-dropdown>
       <div class="tools-divider" />
-      <AppAccountMenu v-if="auth.authenticated" />
+      <AppAccountMenu />
     </nav>
     <el-dialog
       v-model="helpOpen"

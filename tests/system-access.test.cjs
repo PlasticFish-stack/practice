@@ -41,7 +41,7 @@ test('menu settings change presentation while page permissions remain enforced o
     accessibleMenus(router, auth).find((item) => item.index === 'devices').title,
     '设备总览',
   );
-  assert.equal(accessibleMenus(router, auth).find((item) => item.index === 'devices').order, 80);
+  assert.equal(accessibleMenus(router, auth).at(-1).index, 'devices');
   setting.visible = false;
   assert.equal(
     accessibleMenus(router, auth).some((item) => item.index === 'devices'),

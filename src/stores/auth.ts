@@ -68,13 +68,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function authenticate(request: () => Promise<SessionUser>) {
+  async function login(credentials: LoginCredentials) {
     if (busy.value) throw new Error('正在处理登录请求');
     busy.value = true;
     invalidate();
     const version = revision.value;
     try {
-      const value = await request();
+      const value = await authApi.login(credentials);
       if (version !== revision.value) throw new Error('会话已变更，请重新登录');
       user.value = parseSessionUser(value);
       initialized.value = true;
@@ -82,12 +82,6 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       busy.value = false;
     }
-  }
-  function login(credentials: LoginCredentials) {
-    return authenticate(() => authApi.login(credentials));
-  }
-  function setup(credentials: LoginCredentials, bootstrapCode: string) {
-    return authenticate(() => authApi.setup(credentials, bootstrapCode));
   }
 
   async function saveProfile(profile: UserProfile) {
@@ -131,7 +125,6 @@ export const useAuthStore = defineStore('auth', () => {
     can,
     ensureSession,
     login,
-    setup,
     logout,
     saveProfile,
     invalidate,

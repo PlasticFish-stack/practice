@@ -18,14 +18,6 @@ export const MENU_ICONS = [
 // 只允许管理已注册页面的菜单配置，URL 和组件由应用代码确定。
 export const DEFAULT_NAVIGATION: readonly MenuSetting[] = [
   {
-    routeName: 'overview',
-    path: '/overview',
-    title: '运行概览',
-    icon: 'DataAnalysis',
-    order: 0,
-    permissions: [P.observeRead],
-  },
-  {
     routeName: 'devices',
     path: '/device',
     title: '设备列表',

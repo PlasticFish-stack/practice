@@ -52,68 +52,6 @@ export function createMockApi() {
     const user = session ? system.session(session.userId) : undefined;
     const method = req.method ?? 'GET';
 
-    if (url.pathname.startsWith('/api/v1/')) {
-      const status = !user ? 401 : !user.permissions.includes(PERMISSIONS.observeRead) ? 403 : 200;
-      res.statusCode = status;
-      res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-store');
-      res.setHeader('X-Data-Mode', 'mock');
-      res.setHeader('X-Server-Time-Ms', String(now));
-      const finish = (value: unknown) => res.end(JSON.stringify(value));
-      if (status !== 200)
-        return finish({
-          error: {
-            code: status === 401 ? 'invalid_token' : 'permission_denied',
-            message: status === 401 ? '请先登录工作区' : '没有监控查看权限',
-            detail: {},
-            request_id: 'mock-observer',
-          },
-        });
-      if (url.pathname === '/api/v1/auth/session')
-        return finish({
-          subject: user!.username,
-          permissions: ['observe:read'],
-          api_version: '1.0.1',
-          data_mode: 'mock',
-          token_expires_at: null,
-          token_expires_at_ms: null,
-          features: { alerts: false, multi_node: false },
-        });
-      if (url.pathname === '/api/v1/overview')
-        return finish({
-          observed_at: new Date(now).toISOString(),
-          observed_at_ms: now,
-          panel_version: 'mock',
-          panel_uptime_seconds: 0,
-          nodes_total: 0,
-          nodes_online: 0,
-          inbounds_total: 0,
-          clients_total: 0,
-          active_clients_5m: 0,
-          partial: false,
-          node_errors: [],
-        });
-      if (url.pathname === '/api/v1/nodes')
-        return finish({
-          items: [],
-          page: Number(url.searchParams.get('page') || 1),
-          size: Number(url.searchParams.get('size') || 20),
-          total: 0,
-        });
-      res.statusCode = 501;
-      return finish({
-        error: {
-          code: 'feature_unavailable',
-          message: '演示环境没有配置监控数据源',
-          detail: {},
-          request_id: 'mock-observer',
-        },
-      });
-    }
-
-    if (url.pathname === '/api/auth/setup-status' && method === 'GET')
-      return send(res, 200, { setup_required: false });
-
     if (url.pathname === '/api/auth/csrf' && method === 'GET') {
       const token = issue();
       csrfTokens.set(token, now + ttl);
